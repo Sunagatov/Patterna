@@ -1,21 +1,18 @@
-import { LoginPage } from "../features/auth/pages/LoginPage";
-import { useSessionBootstrap } from "../features/auth/hooks/useSessionBootstrap";
-import { ReviewWorkspacePage } from "../features/review/pages/ReviewWorkspacePage";
+import { LibraryPage } from "../features/library/LibraryPage";
+import { SiteHeader } from "./SiteHeader";
+import { SiteFooter } from "./SiteFooter";
+import { useTheme } from "./useTheme";
 
-export default function App() {
-  const { authenticated, loading, onLoggedIn, onLoggedOut } = useSessionBootstrap();
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f4efe6] p-6 text-stone-700">
-        Loading Memora...
-      </div>
-    );
-  }
-
-  if (!authenticated) {
-    return <LoginPage onLoggedIn={onLoggedIn} />;
-  }
-
-  return <ReviewWorkspacePage onLoggedOut={onLoggedOut} />;
+export function App() {
+  const { theme, toggleTheme } = useTheme();
+  return (
+    <div id="top">
+      <a className="skip-link" href="#main">
+        Skip to problems
+      </a>
+      <SiteHeader theme={theme} onToggleTheme={toggleTheme} />
+      <LibraryPage />
+      <SiteFooter />
+    </div>
+  );
 }

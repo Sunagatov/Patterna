@@ -1,137 +1,41 @@
-# Memora
+# Patterna
 
-Memora is a private, single-user capture and review system built around:
+A personal algorithm problem library and practice tracker for LeetCode, NeetCode and AlgoExpert.
 
-- Telegram-first capture
-- asynchronous backend processing
-- review-first trust in AI output
-- web-based search, filtering, editing, and approval
-- a backend that stays reusable for future clients beyond Telegram
+## Current implementation
 
-This repository is the application source monorepo for Memora. It is not the production deployment source of truth.
+The main page is a working React/TypeScript frontend with hardcoded task metadata and illustrative progress. It has list selection, a default-list star, collection progress, search, combined filters, sorting, topic accordions, manual practice history, independent task statuses and review flags. Light/dark themes and local preferences persist in the current browser.
 
-<p>
-  <a href="https://buymeacoffee.com/lucky_1uck">
-    <img src="https://img.shields.io/badge/Support_the_project-FFDD00?style=for-the-badge&amp;logo=buymeacoffee&amp;logoColor=black" alt="Support the project" width="260" height="40">
-  </a>
-</p>
+No Apple Notes progress is imported. There is no login, backend, database connection, code execution or solution judging in this frontend milestone.
 
-## Source-Of-Truth Split
+## Layout
 
-This repository owns:
-- application source code
-- product requirements
-- source-level architecture and invariants
-- AI/human implementation guidance
-- backend, frontend, and telegram-bot source
+```text
+frontend/  React + TypeScript + Vite
+backend/   Reserved for the future FastAPI application
+docs/      Requirements and implementation boundaries
+```
 
-Vault owns production, deployment, runtime, and orchestration truth.
+## Run
 
-Local Vault path:
-- `/Users/zufar/IdeaProjects/Vault`
+Use a Node.js version supported by Vite (22.12+ or a newer supported release).
 
-Repository:
-- `Sunagatov/Vault`
+```sh
+cd frontend
+npm ci
+npm run dev
+```
 
-Primary runtime areas:
-- `apps/memora/`
-- `apps/whisper/`
+Vite serves the application at `http://127.0.0.1:5173`.
 
-## Current Source Modules
+```sh
+npm run check
+npm test
+npm run build
+```
 
-- `backend/` — Kotlin + Spring Boot backend and source-of-truth business logic.
-- `frontend/` — React + Vite + TypeScript web UI.
-- `telegram-bot/` — Kotlin thin Telegram adapter.
-- `.project/docs/requirements/` — product requirements and V1 contracts.
-- `.project/docs/ai/` — canonical detailed AI-agent context for current implementation reality, API surface, invariants, routing, repo map, and token-budget rules.
+Production frontend assets are written to `frontend/dist/`.
 
-## Current State
+See `docs/requirements.md` and `docs/architecture.md` for the current scope and planned API boundary.
 
-Detailed current implementation state lives in:
-- `.project/docs/ai/current-state.md`
-- `.project/docs/ai/api-surface.md`
-- `.project/docs/ai/invariants.md`
-- `.project/docs/ai/env-runtime-reference.md`
-- `.project/docs/ai/repo-map.md`
-- `.project/docs/ai/frontend-v1-mvp.md` for detailed frontend agent guidance
-
-Keep this README high-level. Do not duplicate long current-state summaries here.
-
-## Structural Style
-
-Memora intentionally prefers domain, feature, and area oriented structure over pure technical layers.
-
-Examples:
-- backend: `auth`, `capture`, `category`, `item`, `review`, `transcription`
-- frontend: `features/*`, `shared/*`, `app/*`
-- telegram bot: `bot`, `command`, `backend`, `ingest`, `config`
-
-Pure global layering like only `controller / service / repository / dao / converter` at the top level is not the preferred style.
-
-## Read Order
-
-For implementation work:
-
-1. `AGENTS.md`
-2. `.project/docs/ai/request-routing-guide.md`
-3. `.project/docs/ai/README.md`
-4. the smallest relevant canonical docs under `.project/docs/ai/`
-5. the smallest relevant scoped guide:
-   - `backend/AGENTS.md`
-   - `frontend/AGENTS.md`
-   - `telegram-bot/AGENTS.md`
-
-Do not start by scanning the whole repository.
-
-## High-Signal Safety Facts
-
-- backend remains the source of truth; telegram bot stays thin
-- deterministic AI is local/dev/test fallback only
-- real V1 text AI behavior requires `MEMORA_AI_MODE=openai`
-- production-like runtime should enable `MEMORA_VALIDATE_PRODUCTION_CONFIG=true`
-- production-like runtime should keep `MEMORA_AI_FALLBACK_TO_DETERMINISTIC=false` so broken or missing real AI is visible instead of silently downgraded
-
-## Stack At A Glance
-
-Backend:
-- Kotlin
-- Java
-- Spring Boot
-- Spring Security
-- Spring Data MongoDB
-- MongoDB
-
-Frontend:
-- React
-- TypeScript
-- Vite
-- TanStack Query
-- Tailwind CSS
-
-Telegram bot:
-- Kotlin
-- Java
-- Telegram long polling
-- thin adapter forwarding supported owner inputs to the backend
-
-## Runtime Boundary
-
-For deployment, local orchestration, production config, server operations, and Whisper runtime details, use Vault instead of this repository.
-
-For day-to-day local runs, prefer Vault task entrypoints rather than raw source commands:
-- `Vault/apps/memora/backend`
-- `Vault/apps/memora/frontend`
-- `Vault/apps/memora/telegrambot`
-
----
-
-## ☕ Support the project
-
-If this project helps you learn or inspires your own work, you can support its development.
-
-<p>
-  <a href="https://buymeacoffee.com/lucky_1uck">
-    <img src="https://img.shields.io/badge/Support_the_project-FFDD00?style=for-the-badge&amp;logo=buymeacoffee&amp;logoColor=black" alt="Support the project" width="260" height="40">
-  </a>
-</p>
-
+For a new chat or contributor, start with [the handoff](docs/handoff.md).
