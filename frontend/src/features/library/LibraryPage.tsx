@@ -8,7 +8,6 @@ import {
 import type { SelectionFilter } from "./components/LibraryControls";
 import { FilterDialog } from "./components/FilterDialog";
 import { PracticeDialog } from "./components/PracticeDialog";
-import { ProblemPreview } from "./components/ProblemPreview";
 import { ProgressSummary } from "./components/ProgressSummary";
 import { TopicSection } from "./components/TopicSection";
 import { filterCount, inList, matchesFilters, sortProblems } from "./library";
@@ -20,12 +19,17 @@ import type {
   SortOrder,
   TaskStatus,
 } from "./types";
-import { useLibrary } from "./useLibrary";
+import type { LibraryController } from "./useLibrary";
 
-type ActiveDialog = { kind: "practice" | "preview"; problemId: number } | null;
+type ActiveDialog = { kind: "practice"; problemId: number } | null;
 
-export function LibraryPage() {
-  const library = useLibrary();
+export function LibraryPage({
+  library,
+  active,
+}: {
+  library: LibraryController;
+  active: boolean;
+}) {
   const [defaultList, setDefaultList] = useState(readDefaultList);
   const [list, setList] = useState<LibraryListId>(() => {
     const requested = new URLSearchParams(location.search).get("list");
@@ -79,6 +83,7 @@ export function LibraryPage() {
   );
 
   useEffect(() => {
+    if (!active) return;
     function focusSearch(event: KeyboardEvent) {
       if (
         (event.metaKey || event.ctrlKey) &&
@@ -91,7 +96,7 @@ export function LibraryPage() {
     }
     document.addEventListener("keydown", focusSearch);
     return () => document.removeEventListener("keydown", focusSearch);
-  }, []);
+  }, [active]);
 
   useEffect(() => {
     if (!message) return;
@@ -151,7 +156,11 @@ export function LibraryPage() {
   }
 
   return (
-    <main id="main" className="workspace">
+    <main
+      id={active ? "main" : undefined}
+      className="workspace"
+      hidden={!active}
+    >
       <section className="library-heading" aria-labelledby="page-title">
         <div>
           <h1 id="page-title">Problem library</h1>
@@ -240,9 +249,6 @@ export function LibraryPage() {
               onPractice={(problemId) =>
                 setActiveDialog({ kind: "practice", problemId })
               }
-              onPreview={(problemId) =>
-                setActiveDialog({ kind: "preview", problemId })
-              }
             />
           ))}
         </div>
@@ -281,17 +287,6 @@ export function LibraryPage() {
             library.deletePractice(id, entryId);
             setMessage("Practice entry deleted");
           }}
-          onClose={() => setActiveDialog(null)}
-        />
-      ) : null}
-      {activeDialog?.kind === "preview" && activeProblem ? (
-        <ProblemPreview
-          problem={activeProblem}
-          onStatus={setStatus}
-          onReview={toggleReview}
-          onPractice={(problemId) =>
-            setActiveDialog({ kind: "practice", problemId })
-          }
           onClose={() => setActiveDialog(null)}
         />
       ) : null}

@@ -14,7 +14,7 @@ Private, single-user algorithm practice tracker. Read `docs/requirements.md` for
 - Apply SOLID where it improves responsibilities; do not add interfaces, factories, services, stores or dependencies for hypothetical needs.
 - Preserve manual status changes, manual practice logging, and independent review flags.
 - No code execution, compiler, judge or submission feature.
-- Code solutions and their attached rich thoughts are planned task-detail features. Do not introduce general task or category notes.
+- Task detail supports multiple saved code solutions with attached Markdown thoughts. Do not introduce general task or category notes.
 - Imported source content is read-only in the UI.
 - Never store credentials or authentication tokens in browser storage.
 - The current frontend is not authenticated or backend-connected. Do not describe mock storage as an API or a completed REST contract.

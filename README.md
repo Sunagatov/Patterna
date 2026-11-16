@@ -6,6 +6,8 @@ A personal algorithm problem library and practice tracker for LeetCode, NeetCode
 
 The main page is a working React/TypeScript frontend with hardcoded task metadata and illustrative progress. It has list selection, a default-list star, collection progress, search, combined filters, sorting, topic accordions, manual practice history, independent task statuses and review flags. Light/dark themes and local preferences persist in the current browser.
 
+Task titles open a dedicated NeetCode-style split workspace at `/problems/<leetcode-slug>`. It supports resizable desktop panes, a mobile Problem/Solutions switch, multiple saved code solutions and per-solution Markdown thoughts. Saves, edits and deletes are browser-local and independent of status, review flags and practice. Full source statements have not been imported. Concatenation of Array alone includes a demonstration description, custom examples and user-provided constraints; the Source details table is intentionally omitted.
+
 No Apple Notes progress is imported. There is no login, backend, database connection, code execution or solution judging in this frontend milestone.
 
 ## Layout

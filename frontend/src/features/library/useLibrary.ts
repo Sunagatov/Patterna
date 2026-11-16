@@ -36,3 +36,5 @@ export function useLibrary() {
       update(id, (problem) => deletePractice(problem, entryId)),
   };
 }
+
+export type LibraryController = ReturnType<typeof useLibrary>;

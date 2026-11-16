@@ -1,4 +1,18 @@
 const paths = {
+  copy: (
+    <>
+      <rect x="8" y="8" width="12" height="13" rx="2" />
+      <path d="M16 8V3H3v13h5" />
+    </>
+  ),
+  chevronLeft: <path d="m15 6-6 6 6 6" />,
+  code: <path d="m8 7-5 5 5 5m8-10 5 5-5 5M14 4l-4 16" />,
+  file: (
+    <>
+      <path d="M14 3H5v18h14V8zM14 3v5h5M8 12h8M8 16h6" />
+    </>
+  ),
+  arrowLeft: <path d="M20 12H4m6-6-6 6 6 6" />,
   search: (
     <>
       <circle cx="10.8" cy="10.8" r="6.8" />

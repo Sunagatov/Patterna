@@ -6,7 +6,6 @@ export interface TaskActions {
   onStatus: (id: number, status: TaskStatus) => void;
   onReview: (id: number) => void;
   onPractice: (id: number) => void;
-  onPreview: (id: number) => void;
 }
 
 export function StatusSelect({
@@ -41,16 +40,18 @@ export function TaskRow({
   onStatus,
   onReview,
   onPractice,
-  onPreview,
 }: TaskActions & { problem: Problem }) {
   const count = problem.history.length;
   return (
     <tr>
       <td>
-        <button className="problem-name" onClick={() => onPreview(problem.id)}>
+        <a
+          className="problem-name"
+          href={`/problems/${encodeURIComponent(problem.lcSlug)}`}
+        >
           {problem.title}
           <Icon name="arrowUpRight" />
-        </button>
+        </a>
       </td>
       <td>
         <span

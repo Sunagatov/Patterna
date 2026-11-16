@@ -6,7 +6,7 @@ One Git repository, with `frontend/` and `backend/` boundaries.
 
 React + strict TypeScript + Vite. Runtime dependencies are React and React DOM; no state, query or routing library is needed for the current single-page scope.
 
-- `src/app/`: composition, header/footer, theme and stylesheet.
+- `src/app/`: composition, header/footer, theme, stylesheet and guarded History API navigation. Library state is shared at App level; the library stays mounted while a task is open so in-session filters survive returning to it.
 - `src/features/library/types.ts`: UI domain types, statuses, lists and filters.
 - `src/features/library/data/fixtures.ts`: hardcoded catalogue and illustrative progress.
 - `src/features/library/library.ts`: pure query, ordering, date and progress functions.
@@ -14,10 +14,15 @@ React + strict TypeScript + Vite. Runtime dependencies are React and React DOM; 
 - `src/features/library/useLibrary.ts`: small React state hook; independent update operations.
 - `src/features/library/components/`: single-purpose controls, rows, summaries and dialogs.
 - `src/shared/ui/`: static icon and accessible native-dialog primitives.
+- `src/features/problem/`: task workspace, read-only source metadata, code editor, safe Markdown thoughts renderer, and separately validated `patterna.solutions.v1` storage. Multiple solutions refer to the stable internal problem ID and share no state with manual status/review/practice operations.
 
 Filtered results and summary counts are derived from state. No duplicate summary state, dependency injection, service layer or fake network requests.
 
 Browser persistence stores progress and preferences, not credentials. Hardcoded progress is illustrative and is not imported from Apple Notes.
+
+Task routes use `/problems/<leetcode-slug>` and must receive the SPA entrypoint on direct requests. Vite already supplies that fallback; future hosting must preserve it. Internal links support browser Back/Forward, reload and opening in a new tab without a routing dependency. Task layouts follow the NeetCode split-workspace reference, adapted to storage rather than execution. No run/submit APIs exist.
+
+Solution saves write synchronously before reporting success. Unreadable records disable writes; storage quota errors keep the editor draft; a stale tab must reload rather than overwriting a newer solution collection. Thoughts render as React text/elements with a small supported Markdown subset (headings, paragraphs, lists, emphasis and code); HTML is never executed.
 
 ## Future backend boundary
 

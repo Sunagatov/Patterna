@@ -16,10 +16,14 @@ The repository was repurposed from inherited Memora code. That obsolete Kotlin/S
 - Header has a theme toggle and no Needs review button. The two prototype/sample labels were removed from the interface.
 - Iced Latte-inspired footer with a support link to `https://buymeacoffee.com/lucky_1uck`.
 - Browser-local progress/preferences, with no credentials stored there.
+- Standalone task routes at `/problems/<leetcode-slug>`, with NeetCode-style split panes, pointer/keyboard resizing and a mobile Problem/Solutions switch.
+- Multiple browser-local solutions with separate code and Markdown thoughts, optional metadata, explicit save, editing and confirmed deletion. Saving never changes status/review/practice.
+- Refresh persistence, unsaved navigation warnings, readable storage errors, corrupt-data protection and cross-tab conflict protection for solutions.
+- Blue light/dark themes; the library no longer shows LC/NC abbreviations or dates below practice counts.
 
 ## Not implemented
 
-The full task-detail/solution editor, password authentication, FastAPI backend, PostgreSQL database, Alembic migrations, catalogue imports and generated OpenAPI frontend client are still outstanding. `backend/` is reserved for the agreed Python stack. The small problem-preview dialog is not the full task-detail page.
+Password authentication, FastAPI backend, PostgreSQL database, Alembic migrations, source-content imports and generated OpenAPI frontend client are still outstanding. `backend/` is reserved for the agreed Python stack. The old preview dialog has been replaced by a standalone task page. Concatenation of Array alone has a demonstration description, two custom examples and user-supplied constraints. The later user instruction removes the entire Source details table and platform selector; do not restore placeholder rows, duplicated ratings or the large original-problem notice.
 
 No Apple Notes progress was imported. The fixture progress is not the user's real history. Lexora is only a reference for the future password-based authorization approach, not Patterna's foundation.
 
@@ -41,7 +45,7 @@ npm test
 npm run build
 ```
 
-Before this handoff, strict type checking, all six behaviour tests, formatting, the production build and browser QA passed. Browser checks included light/dark themes, 320px/390px mobile and 1280px desktop widths, search/combined filters, sorting, default-list persistence, independent progress actions and backdated-practice corrections. No application console warnings/errors were observed. Browser QA screenshots and the earlier standalone HTML prototype are outside this repository and are not required to run it.
+Current validation includes strict type checking, 12 behaviour tests and the production build. Task-page browser QA covers light/dark desktop, 320px/390px mobile, multiple independent solutions, code-only and thoughts-only saves, Markdown safety, refresh persistence, edit/delete, removal of the source metadata table, manual practice/status/review independence, in-session library filters, unsaved navigation including browser Back, quota failures, corrupt storage and cross-tab write conflicts. No application console warnings/errors were observed. QA uses isolated browser contexts; no personal solution or practice data is imported by these checks.
 
 ## Existing source material
 
