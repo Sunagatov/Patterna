@@ -33,61 +33,58 @@
   color-scheme: light;
   font-synthesis: none;
   --background: #ffffff;
-  --surface: #f8faf6;
-  --surface-hover: #f0f5ed;
-  --summary: #eef4ec;
-  --ink: #17241f;
-  --muted: #74816f;
-  --subtle: #8d9986;
-  --border: #dce5d7;
-  --strong-border: #c8d4c2;
-  --accent: #1b4332;
-  --accent-hover: #123525;
+  --surface: #f7f9fc;
+  --surface-hover: #eef3fb;
+  --summary: #eef4ff;
+  --ink: #17233b;
+  --muted: #586a83;
+  --subtle: #5f7088;
+  --border: #dce4ef;
+  --strong-border: #b9c9df;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
   --accent-ink: #ffffff;
-  --accent-soft: #eaf2e5;
-  --track: #d8e4d2;
-  --fill: #4c7944;
-  --easy: #497847;
-  --medium: #967022;
-  --hard: #ab5361;
-  --solved-bg: #edf5e7;
-  --progress-bg: #fbf4de;
-  --unsolved-bg: #fbeaed;
-  --footer: #1b4332;
-  --footer-ink: #dbe6d5;
-  --footer-muted: #a6bda0;
-  --shadow: 0 20px 80px #17241f20;
+  --accent-soft: #eaf1ff;
+  --track: #d8e5ff;
+  --fill: #3b6ee8;
+  --easy: #0369a1;
+  --medium: #876018;
+  --hard: #b0445c;
+  --solved-bg: #e8f0ff;
+  --progress-bg: #fff4d9;
+  --unsolved-bg: #fcebf0;
+  --footer: #101f3b;
+  --footer-ink: #e4edff;
+  --footer-muted: #9db1d2;
+  --shadow: 0 20px 80px #17233b20;
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --background: #111914;
-  --surface: #18211a;
-  --surface-hover: #223024;
-  --summary: #202d22;
-  --ink: #e4ecdf;
-  --muted: #a0af99;
-  --subtle: #8f9d89;
-  --border: #30412f;
-  --strong-border: #475b42;
-  --accent: #a1c392;
-  --accent-hover: #b3d4a5;
-  --accent-ink: #13200f;
-  --accent-soft: #293b27;
-  --track: #3a4c34;
-  --fill: #94b582;
-  --easy: #a5c995;
-  --medium: #d7bb75;
-  --hard: #e0a0ab;
-  --solved-bg: #293e25;
-  --progress-bg: #3c3521;
-  --unsolved-bg: #3f2931;
-  --footer: #0c140e;
-  --footer-ink: #d7e3d1;
-  --footer-muted: #a0b296;
-  --easy: #a0cb91;
-  --medium: #dfbf72;
-  --hard: #e6a0ae;
+  --background: #0b1220;
+  --surface: #111c30;
+  --surface-hover: #1a2a43;
+  --summary: #152643;
+  --ink: #e9f0fb;
+  --muted: #a7b5cb;
+  --subtle: #91a5c2;
+  --border: #263753;
+  --strong-border: #3b5274;
+  --accent: #82b0ff;
+  --accent-hover: #a9caff;
+  --accent-ink: #08162c;
+  --accent-soft: #203a61;
+  --track: #2c4268;
+  --fill: #71a4ff;
+  --easy: #7dd3fc;
+  --medium: #f4cf80;
+  --hard: #f5a3b3;
+  --solved-bg: #203c65;
+  --progress-bg: #3b3220;
+  --unsolved-bg: #3e2638;
+  --footer: #070f1d;
+  --footer-ink: #dde8fb;
+  --footer-muted: #9eb1cf;
   --shadow: 0 20px 80px #00000066;
 }
 
@@ -229,10 +226,10 @@ select:focus-visible {
   background: var(--accent);
 }
 .brand-mark i:first-child {
-  background: #6d995d;
+  background: #60a5fa;
 }
 .brand-mark i:last-child {
-  background: #88aa76;
+  background: #93c5fd;
 }
 .header-nav {
   display: none;
@@ -795,21 +792,6 @@ h1 {
   height: 12px;
   color: var(--muted);
 }
-.platform-links {
-  position: absolute;
-  right: 49px;
-  top: 45px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 9px;
-  color: var(--subtle);
-  line-height: 1.2;
-}
-.platform-links a:hover {
-  color: var(--accent);
-  text-decoration: underline;
-}
 .difficulty-label {
   font-size: 11px;
 }
@@ -856,7 +838,7 @@ h1 {
 }
 .status-solved {
   background: var(--solved-bg);
-  color: var(--easy);
+  color: var(--accent);
 }
 .status-in-progress {
   background: var(--progress-bg);
@@ -880,13 +862,6 @@ h1 {
   text-align: left;
   font-size: 11px;
   font-weight: 400;
-}
-.practice-button small {
-  font-size: 9px;
-  color: var(--subtle);
-  white-space: nowrap;
-  border-left: 1px solid var(--border);
-  padding-left: 7px;
 }
 .practice-button:hover > span {
   color: var(--accent);
@@ -1015,7 +990,7 @@ h1 {
   border-radius: 30px;
   font-size: 12px;
   font-weight: 600;
-  color: #171b10;
+  color: #172033;
   background: #ffdd00;
   margin-bottom: 20px;
   white-space: nowrap;
@@ -1109,7 +1084,7 @@ dialog {
   width: 100%;
 }
 dialog::backdrop {
-  background: #09160c80;
+  background: #0b122080;
   backdrop-filter: blur(3px);
 }
 .dialog-header {
@@ -1654,13 +1629,6 @@ legend {
   .problem-name:focus-visible > svg {
     opacity: 1;
   }
-  .platform-links {
-    position: static;
-    right: auto;
-    top: auto;
-    font-size: 10px;
-    margin-top: 3px;
-  }
   .difficulty-label {
     font-size: 12px;
   }
@@ -1677,11 +1645,6 @@ legend {
     justify-content: center;
     gap: 2px;
     font-size: 12px;
-  }
-  .practice-button small {
-    font-size: 10px;
-    padding-left: 0;
-    border: 0;
   }
   .review-cell {
     text-align: center;
@@ -1889,10 +1852,6 @@ legend {
   .practice-button {
     gap: 4px;
     font-size: 10px;
-  }
-  .practice-button small {
-    font-size: 9px;
-    padding-left: 4px;
   }
   .sort-select {
     width: 175px;

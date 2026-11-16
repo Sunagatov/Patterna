@@ -1,5 +1,4 @@
 import { Icon } from "../../../shared/ui/Icon";
-import { formatDate, lastPractised } from "../library";
 import { taskStatuses } from "../types";
 import type { Problem, TaskStatus } from "../types";
 
@@ -44,7 +43,6 @@ export function TaskRow({
   onPractice,
   onPreview,
 }: TaskActions & { problem: Problem }) {
-  const date = lastPractised(problem);
   const count = problem.history.length;
   return (
     <tr>
@@ -53,25 +51,6 @@ export function TaskRow({
           {problem.title}
           <Icon name="arrowUpRight" />
         </button>
-        <div className="platform-links">
-          <a
-            href={`https://leetcode.com/problems/${problem.lcSlug}/`}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={`${problem.title} on LeetCode`}
-          >
-            LC
-          </a>
-          <span>·</span>
-          <a
-            href={`https://neetcode.io/problems/${problem.ncSlug}/question?list=neetcode250`}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={`${problem.title} on NeetCode`}
-          >
-            NC
-          </a>
-        </div>
       </td>
       <td>
         <span
@@ -94,7 +73,6 @@ export function TaskRow({
               ? `${count} ${count === 1 ? "time" : "times"}`
               : "Log practice"}
           </span>
-          <small>{date ? formatDate(date) : "Not practised"}</small>
         </button>
       </td>
       <td className="review-cell">
