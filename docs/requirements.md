@@ -5,8 +5,11 @@ Patterna is a private, single-user algorithm problem library and practice tracke
 ## Main page
 
 - Home-linked Patterna brand, header and footer adapted from Iced Latte.
+- The Patterna logo is the library/home link. Omit the redundant Problems link in the main header, the Problem library back link and previous/next problem arrows in the task header.
+- Task badges show difficulty, category and study-list memberships together beneath the title (e.g. Easy · Arrays & Hashing · NeetCode 250). Do not repeat Topics & patterns or Study lists as lower sections.
 - Header light/dark theme button; no header Needs review button.
 - Footer Support this project button uses `https://buymeacoffee.com/lucky_1uck`.
+- Reuse the site footer on task pages below the full-height workspace. Back to top scrolls without discarding an unsaved solution. Do not show the “Patterna demonstration description and examples.” caption in the question pane.
 - No Sample data label or sample-progress explanatory footer text in the product interface.
 - Study-list dropdown and star selecting the list to open by default.
 - Compact solved/total, difficulty and Needs review summary for the selected collection. Filtering does not alter collection progress.

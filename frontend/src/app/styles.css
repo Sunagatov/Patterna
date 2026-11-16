@@ -231,20 +231,6 @@ select:focus-visible {
 .brand-mark i:last-child {
   background: #93c5fd;
 }
-.header-nav {
-  display: none;
-  margin-right: auto;
-  margin-left: 24px;
-}
-.nav-link {
-  display: block;
-  padding: 8px 17px;
-  border-radius: 7px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--accent);
-  background: var(--accent-soft);
-}
 .header-actions {
   display: flex;
   align-items: center;
@@ -1412,9 +1398,6 @@ legend {
     width: 25px;
     height: 25px;
     gap: 3px;
-  }
-  .header-nav {
-    display: block;
   }
   .header-actions {
     gap: 20px;

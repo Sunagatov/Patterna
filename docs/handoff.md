@@ -14,7 +14,7 @@ The repository was repurposed from inherited Memora code. That obsolete Kotlin/S
 - Independent manual task status, review flags and dated practice entries; practice can be backdated or deleted.
 - Light/dark theme preference; mobile-first rows and desktop table.
 - Header has a theme toggle and no Needs review button. The two prototype/sample labels were removed from the interface.
-- Iced Latte-inspired footer with a support link to `https://buymeacoffee.com/lucky_1uck`.
+- Iced Latte-inspired footer with a support link to `https://buymeacoffee.com/lucky_1uck`, reused below the task workspace as well as on the library. The demonstration caption is omitted from the question pane.
 - Browser-local progress/preferences, with no credentials stored there.
 - Standalone task routes at `/problems/<leetcode-slug>`, with NeetCode-style split panes, pointer/keyboard resizing and a mobile Problem/Solutions switch.
 - Multiple browser-local solutions with separate code and Markdown thoughts, optional metadata, explicit save, editing and confirmed deletion. Saving never changes status/review/practice.

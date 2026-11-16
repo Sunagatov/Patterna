@@ -15,9 +15,6 @@ import { SolutionWorkspace } from "./SolutionWorkspace";
 import type { SolutionsController } from "./useSolutions";
 import "./task-page.css";
 
-export const problemPath = (problem: Problem) =>
-  `/problems/${encodeURIComponent(problem.lcSlug)}`;
-
 interface Props {
   problem: Problem;
   library: LibraryController;
@@ -42,9 +39,6 @@ export function TaskPage({
   const [practiceOpen, setPracticeOpen] = useState(false);
   const [split, setSplit] = useState(44);
   const panels = useRef<HTMLDivElement>(null);
-  const index = library.problems.findIndex((item) => item.id === problem.id);
-  const previous = library.problems[index - 1];
-  const next = library.problems[index + 1];
   function resize(clientX: number) {
     if (!panels.current) return;
     const bounds = panels.current.getBoundingClientRect();
@@ -59,33 +53,6 @@ export function TaskPage({
     <main id="main" className="task-page">
       <header className="task-appbar">
         <Brand />
-        <span className="appbar-divider" />
-        <a className="library-back" href="/">
-          <Icon name="arrowLeft" />
-          <span>Problem library</span>
-        </a>
-        <div className="task-navigation">
-          {previous ? (
-            <a
-              className="icon-button"
-              href={problemPath(previous)}
-              aria-label={`Previous problem: ${previous.title}`}
-            >
-              <Icon name="chevronLeft" />
-            </a>
-          ) : (
-            <span className="icon-button navigation-placeholder" />
-          )}
-          {next ? (
-            <a
-              className="icon-button"
-              href={problemPath(next)}
-              aria-label={`Next problem: ${next.title}`}
-            >
-              <Icon name="chevronRight" />
-            </a>
-          ) : null}
-        </div>
         <span className="pane-heading-spacer" />
         <StatusSelect problem={problem} onChange={library.setStatus} />
         <button

@@ -41,6 +41,11 @@ export function App() {
         const anchor = (event.target as Element).closest("a");
         if (!anchor || anchor.target || anchor.hasAttribute("download")) return;
         const href = anchor.getAttribute("href");
+        if (href === "#top") {
+          event.preventDefault();
+          document.getElementById("top")?.scrollIntoView();
+          return;
+        }
         if (
           href === "/" ||
           href === "/#library" ||
@@ -88,7 +93,7 @@ export function App() {
           </a>
         </main>
       ) : null}
-      {!detailRoute ? <SiteFooter /> : null}
+      <SiteFooter />
     </div>
   );
 }

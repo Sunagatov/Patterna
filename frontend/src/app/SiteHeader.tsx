@@ -14,11 +14,6 @@ export function SiteHeader({
     <header className="site-header">
       <div className="header-inner">
         <Brand />
-        <nav className="header-nav" aria-label="Main navigation">
-          <a className="nav-link active" href="/#library" aria-current="page">
-            Problems
-          </a>
-        </nav>
         <div className="header-actions">
           <button
             className="theme-toggle"

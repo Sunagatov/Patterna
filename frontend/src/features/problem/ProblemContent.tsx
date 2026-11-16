@@ -14,31 +14,13 @@ export function ProblemContent({ problem }: { problem: Problem }) {
           {problem.difficulty}
         </span>
         <span>{problem.category}</span>
+        {problem.lists.map((id) => (
+          <span key={id}>
+            {studyLists.find((list) => list.id === id)?.name}
+          </span>
+        ))}
       </div>
       {hasDemoDescription ? <ConcatenationDescription /> : null}
-      <section className="question-section">
-        <h2>Topics & patterns</h2>
-        <div className="detail-tags">
-          {problem.tags.map((tag) => (
-            <span key={tag}>{tag}</span>
-          ))}
-        </div>
-      </section>
-      <section className="question-section">
-        <h2>Study lists</h2>
-        <div className="detail-tags">
-          {problem.lists.map((id) => (
-            <span key={id}>
-              {studyLists.find((list) => list.id === id)?.name}
-            </span>
-          ))}
-        </div>
-      </section>
-      {hasDemoDescription ? (
-        <p className="source-attribution">
-          Patterna demonstration description and examples.
-        </p>
-      ) : null}
     </article>
   );
 }
