@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Icon } from "../../shared/ui/Icon";
 import { CodeEditor } from "./CodeEditor";
 import { ThoughtsEditor } from "./ThoughtsEditor";
@@ -29,6 +29,8 @@ export function SolutionWorkspace({
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const newId = useRef<string | null>(null);
   const selected = entries.find((entry) => entry.id === selectedId);
   const dirty =
     JSON.stringify(draft) !==
@@ -45,40 +47,48 @@ export function SolutionWorkspace({
     setError("");
   }
   function open(entry?: SavedSolution) {
+    if (busy) return;
     if (dirty && !window.confirm("Discard your unsaved solution changes?"))
       return;
     setSelectedId(entry?.id ?? null);
+    newId.current = null;
     setDraft(entry ? solutionContent(entry) : emptySolution());
     setMessage("");
     setError("");
   }
-  function save() {
-    const id = selectedId ?? crypto.randomUUID();
-    const failure = solutions.save(problemId, id, draft);
+  async function save() {
+    if (busy) return;
+    const id = selectedId ?? (newId.current ??= crypto.randomUUID());
+    setBusy(true);
+    const failure = await solutions.save(problemId, id, draft);
+    setBusy(false);
     if (failure) {
       setError(failure);
       return;
     }
     setSelectedId(id);
     setError("");
-    setMessage("Solution saved in this browser.");
-    onDirtyChange(false);
+    setMessage("Solution saved.");
   }
-  function remove() {
+  async function remove() {
     if (
+      busy ||
       !selected ||
       !window.confirm(
         `Delete “${selected.title.trim() || "this solution"}”? This cannot be undone.`,
       )
     )
       return;
-    const failure = solutions.remove(selected.id);
+    setBusy(true);
+    const failure = await solutions.remove(selected.id);
+    setBusy(false);
     if (failure) {
       setError(failure);
       return;
     }
     const next = entries.find((entry) => entry.id !== selected.id);
     setSelectedId(next?.id ?? null);
+    newId.current = null;
     setDraft(next ? solutionContent(next) : emptySolution());
     setError("");
     setMessage("Solution deleted.");
@@ -152,11 +162,7 @@ export function SolutionWorkspace({
           </select>
         </label>
         <span className="draft-state">
-          {dirty
-            ? "Unsaved changes"
-            : selected
-              ? "Saved in this browser"
-              : "New solution"}
+          {dirty ? "Unsaved changes" : selected ? "Saved" : "New solution"}
         </span>
         <span className="pane-heading-spacer" />
         <button
@@ -171,7 +177,7 @@ export function SolutionWorkspace({
           className="icon-button"
           onClick={remove}
           aria-label="Delete selected solution"
-          disabled={!selected}
+          disabled={!selected || busy}
         >
           <Icon name="trash" />
         </button>
@@ -260,11 +266,6 @@ export function SolutionWorkspace({
           ) : null}
         </div>
       ) : null}
-      {solutions.error ? (
-        <p className="workspace-error" role="alert">
-          {solutions.error}
-        </p>
-      ) : null}
       <CodeEditor code={draft.code} onChange={(code) => update({ code })} />
       <ThoughtsEditor
         text={draft.thoughts}
@@ -282,9 +283,9 @@ export function SolutionWorkspace({
         <button
           className="button button-primary"
           onClick={save}
-          disabled={Boolean(solutions.error)}
+          disabled={busy}
         >
-          Save solution
+          {busy ? "Saving…" : "Save solution"}
         </button>
       </div>
     </section>

@@ -4,23 +4,23 @@ A personal algorithm problem library and practice tracker for LeetCode, NeetCode
 
 ## Current implementation
 
-The main page is a working React/TypeScript frontend with hardcoded task metadata and illustrative progress. It has list selection, a default-list star, collection progress, search, combined filters, sorting, topic accordions, manual practice history, independent task statuses and review flags. Light/dark themes and local preferences persist in the current browser.
+The library has list selection, collection progress, search, combined filters, sorting, topic accordions, manual practice history, independent task statuses and review flags. Light/dark theme and default-list preferences stay in the browser.
 
-Task titles open a dedicated NeetCode-style split workspace at `/problems/<leetcode-slug>`. It supports resizable desktop panes, a mobile Problem/Solutions switch, multiple saved code solutions and per-solution Markdown thoughts. Saves, edits and deletes are browser-local and independent of status, review flags and practice. Full source statements have not been imported. Concatenation of Array alone includes a demonstration description, custom examples and user-provided constraints; the Source details table is intentionally omitted.
+Task titles open a dedicated split workspace at `/problems/<leetcode-slug>`, with resizable desktop panes, a mobile Problem/Solutions switch, multiple saved code solutions and per-solution Markdown thoughts. Concatenation of Array includes the demonstration description, custom examples and user-provided constraints.
 
-No Apple Notes progress is imported. There is no login, backend, database connection, code execution or solution judging in this frontend milestone.
+A single owner password protects the catalogue and workspace. FastAPI stores statuses, review flags, dated practice and solutions in PostgreSQL. A new database starts with an empty practice history. In a browser that has previous Patterna saves, **Import previous browser data** imports saved solutions, manual practice entries and progress values that differ from the original demo. Existing server records take precedence.
 
 ## Layout
 
 ```text
 frontend/  React + TypeScript + Vite
-backend/   Reserved for the future FastAPI application
+backend/   FastAPI + SQLAlchemy + PostgreSQL + Alembic
 docs/      Requirements and implementation boundaries
 ```
 
 ## Run
 
-Use a Node.js version supported by Vite (22.12+ or a newer supported release).
+Start the database and API using the [backend setup instructions](backend/README.md). In a separate terminal, use Node.js 22.12+ to start the frontend.
 
 ```sh
 cd frontend
@@ -28,7 +28,7 @@ npm ci
 npm run dev
 ```
 
-Vite serves the application at `http://127.0.0.1:5173`.
+Open `http://127.0.0.1:5173` and sign in with the owner password. For old browser saves, open the same address you used previously, such as `http://localhost:5173`. Both hosts resolve to the local app, but use separate browser storage.
 
 ```sh
 npm run check
@@ -38,6 +38,6 @@ npm run build
 
 Production frontend assets are written to `frontend/dist/`.
 
-See `docs/requirements.md` and `docs/architecture.md` for the current scope and planned API boundary.
+See `docs/requirements.md` and `docs/architecture.md` for the current scope and API boundary.
 
 For a new chat or contributor, start with [the handoff](docs/handoff.md).

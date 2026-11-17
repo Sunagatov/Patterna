@@ -1,0 +1,9 @@
+**
+!pyproject.toml
+!uv.lock
+!alembic.ini
+!migrations/
+!migrations/**
+!patterna/
+!patterna/**
+**/__pycache__/

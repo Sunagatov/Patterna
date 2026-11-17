@@ -56,20 +56,6 @@ export function readProblems(): Problem[] {
   });
 }
 
-export function saveProblems(problems: Problem[]): void {
-  const progress = Object.fromEntries(
-    problems.map(({ id, status, needsReview, history }) => [
-      id,
-      { status, needsReview, history },
-    ]),
-  );
-  try {
-    localStorage.setItem(progressKey, JSON.stringify(progress));
-  } catch {
-    /* Browser-local mock state still works for this session. */
-  }
-}
-
 export function readDefaultList(): LibraryListId | null {
   try {
     const saved = localStorage.getItem(defaultListKey);

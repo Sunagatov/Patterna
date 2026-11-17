@@ -1,66 +1,51 @@
 import { useState } from "react";
-import {
-  loadSolutions,
-  persistSolutions,
-  saveSolutionEntry,
-} from "./solutions";
-import type { SavedSolution, SolutionDraft } from "./solutions";
+import { api, errorMessage } from "../../api/client";
+import type { ApiSolution } from "../../api/client";
+import type { SolutionDraft } from "./solutions";
 
-export function useSolutions() {
-  const [state, setState] = useState(() => {
-    try {
-      return {
-        entries: loadSolutions(localStorage),
-        error: null as string | null,
-      };
-    } catch {
-      return {
-        entries: [] as SavedSolution[],
-        error:
-          "Saved solutions could not be read. Existing browser data has been left untouched. Saving is disabled to protect it.",
-      };
-    }
-  });
-
-  function commit(entries: SavedSolution[]): string | null {
-    if (state.error) return state.error;
-    try {
-      if (
-        JSON.stringify(loadSolutions(localStorage)) !==
-        JSON.stringify(state.entries)
-      ) {
-        return "Saved solutions changed in another tab. Copy your draft, then reload before saving so no work is overwritten.";
-      }
-      persistSolutions(localStorage, entries);
-      setState({ entries, error: null });
-      return null;
-    } catch {
-      return "Could not save in this browser. Your draft is still here. Check available storage or copy your work before leaving.";
-    }
-  }
+export function useSolutions(initial: ApiSolution[]) {
+  const [entries, setEntries] = useState(initial);
 
   return {
-    entries: state.entries,
-    error: state.error,
-    save: (problemId: number, id: string, draft: SolutionDraft) => {
+    entries,
+    replaceEntries: setEntries,
+    save: async (problemId: number, id: string, draft: SolutionDraft) => {
+      const existing = entries.find((entry) => entry.id === id);
       try {
-        return commit(
-          saveSolutionEntry(
-            state.entries,
-            draft,
-            problemId,
-            id,
-            new Date().toISOString(),
-          ),
+        const { data } = await api.PUT(
+          "/api/problems/{problem_id}/solutions/{solution_id}",
+          {
+            params: { path: { problem_id: problemId, solution_id: id } },
+            body: { ...draft, version: existing?.version ?? 0 },
+          },
         );
+        if (!data) throw new Error("Missing saved solution");
+        setEntries((current) =>
+          current.some((entry) => entry.id === id)
+            ? current.map((entry) => (entry.id === id ? data : entry))
+            : [...current, data],
+        );
+        return null;
       } catch (error) {
-        return error instanceof Error
-          ? error.message
-          : "Could not save solution.";
+        return errorMessage(error);
       }
     },
-    remove: (id: string) =>
-      commit(state.entries.filter((entry) => entry.id !== id)),
+    remove: async (id: string) => {
+      const entry = entries.find((item) => item.id === id);
+      if (!entry) return null;
+      try {
+        await api.DELETE("/api/problems/{problem_id}/solutions/{solution_id}", {
+          params: {
+            path: { problem_id: entry.problemId, solution_id: id },
+            query: { version: entry.version },
+          },
+        });
+        setEntries((current) => current.filter((item) => item.id !== id));
+        return null;
+      } catch (error) {
+        return errorMessage(error);
+      }
+    },
   };
 }
 

@@ -4,8 +4,8 @@ Private, single-user algorithm practice tracker. Read `docs/requirements.md` for
 
 ## Repository boundaries
 
-- `frontend/`: React, TypeScript, Vite application. Currently uses hardcoded fixtures and browser-local progress.
-- `backend/`: reserved for Python/FastAPI, SQLAlchemy, PostgreSQL and Alembic. Not implemented yet.
+- `frontend/`: React, TypeScript and Vite application, with a typed same-origin API client.
+- `backend/`: Python/FastAPI, SQLAlchemy, PostgreSQL and Alembic.
 - `docs/`: current project requirements and architecture; do not restore inherited Memora content.
 
 ## Working rules
@@ -17,8 +17,7 @@ Private, single-user algorithm practice tracker. Read `docs/requirements.md` for
 - Task detail supports multiple saved code solutions with attached Markdown thoughts. Do not introduce general task or category notes.
 - Imported source content is read-only in the UI.
 - Never store credentials or authentication tokens in browser storage.
-- The current frontend is not authenticated or backend-connected. Do not describe mock storage as an API or a completed REST contract.
-- When a backend exists, generate frontend API types/client from its OpenAPI schema; do not hand-maintain duplicate transport types.
+- Generate frontend API types from the FastAPI OpenAPI schema and use the typed client. Keep the historical frontend fixtures available for browser-data import.
 - Mobile-first layouts must also work on desktop. Verify both themes, touch controls, keyboard use and overflow.
-- All schema changes in the future backend need reviewed Alembic migrations.
+- All database schema changes need reviewed Alembic migrations. Run the PostgreSQL API tests for backend changes.
 - Run `cd frontend && npm run check && npm test && npm run build` for application changes, and browser-check changed user flows.

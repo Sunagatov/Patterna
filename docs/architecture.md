@@ -4,31 +4,26 @@ One Git repository, with `frontend/` and `backend/` boundaries.
 
 ## Frontend
 
-React + strict TypeScript + Vite. Runtime dependencies are React and React DOM; no state, query or routing library is needed for the current single-page scope.
+React, strict TypeScript and Vite. The OpenAPI-derived types and `openapi-fetch` client live in `src/api/`.
 
-- `src/app/`: composition, header/footer, theme, stylesheet and guarded History API navigation. Library state is shared at App level; the library stays mounted while a task is open so in-session filters survive returning to it.
-- `src/features/library/types.ts`: UI domain types, statuses, lists and filters.
-- `src/features/library/data/fixtures.ts`: hardcoded catalogue and illustrative progress.
-- `src/features/library/library.ts`: pure query, ordering, date and progress functions.
-- `src/features/library/storage.ts`: validated browser-local progress and preferences.
-- `src/features/library/useLibrary.ts`: small React state hook; independent update operations.
-- `src/features/library/components/`: single-purpose controls, rows, summaries and dialogs.
-- `src/shared/ui/`: static icon and accessible native-dialog primitives.
-- `src/features/problem/`: task workspace, read-only source metadata, code editor, safe Markdown thoughts renderer, and separately validated `patterna.solutions.v1` storage. Multiple solutions refer to the stable internal problem ID and share no state with manual status/review/practice operations.
+- `src/app/` owns sign-in, the workspace load, layout, theme and guarded History API navigation. The library stays mounted while a task is open so filters survive returning to it.
+- `src/features/library/` owns ordering, filtering, progress and practice controls.
+- `src/features/problem/` owns the split task workspace, solution editor and safe Markdown renderer.
+- `src/shared/ui/` owns icons and accessible native-dialog components.
 
-Filtered results and summary counts are derived from state. No duplicate summary state, dependency injection, service layer or fake network requests.
+The frontend derives filtered results and summary counts from the server workspace. Theme and default-list preferences stay in browser storage. The explicit import reads legacy library and solution keys, compares progress to the original fixture and excludes seeded practice history.
 
-Browser persistence stores progress and preferences, not credentials. Hardcoded progress is illustrative and is not imported from Apple Notes.
+Task routes use `/problems/<leetcode-slug>` and must receive the SPA entry point on direct requests. Vite supplies that fallback and proxies `/api` to the local API. Hosting must preserve the fallback and serve `/api` on the same origin.
 
-Task routes use `/problems/<leetcode-slug>` and must receive the SPA entrypoint on direct requests. Vite already supplies that fallback; future hosting must preserve it. Internal links support browser Back/Forward, reload and opening in a new tab without a routing dependency. Task layouts follow the NeetCode split-workspace reference, adapted to storage rather than execution. No run/submit APIs exist.
+The editor reports a save after the database commits. Request failures retain the draft. Thoughts render as React text and elements with support for headings, paragraphs, lists, emphasis and code.
 
-Solution saves write synchronously before reporting success. Unreadable records disable writes; storage quota errors keep the editor draft; a stale tab must reload rather than overwriting a newer solution collection. Thoughts render as React text/elements with a small supported Markdown subset (headings, paragraphs, lists, emphasis and code); HTML is never executed.
+## Backend
 
-## Future backend boundary
+FastAPI defines request and response schemas. Commit the exported OpenAPI contract and regenerate TypeScript types using the commands in `backend/README.md`.
 
-FastAPI will define request/response schemas and expose OpenAPI. Generate TypeScript transport types and the API client from that schema, with checks for generated-code drift and behaviour tests for API semantics. Current UI domain types are not a completed transport contract.
+PostgreSQL stores canonical problems, status and review flags, individual practice entries and versioned solutions. Practice and solution writes use stable IDs. Solution updates and deletions require the version last read by the client. Browser imports commit atomically, use a receipt for idempotency and preserve existing server records. Alembic manages schema changes.
 
-PostgreSQL schema changes will use reviewed Alembic migrations. Platform-specific source content and shared canonical-task progress will remain distinct. Backend and authentication are not implemented in this milestone.
+The owner password is verified with Argon2. An HttpOnly, SameSite=Strict cookie carries a random session token, and PostgreSQL stores only its digest and expiry. Sign-out revokes the session. Browser writes also require an application request header.
 
 ## Catalogue provenance
 

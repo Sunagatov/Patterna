@@ -38,9 +38,9 @@ Patterna is a private, single-user algorithm problem library and practice tracke
 
 ## Current milestone
 
-The library and task-detail frontend use hardcoded catalogue metadata and browser-local progress/solutions. Task titles open `/problems/<leetcode-slug>`. The task page follows the NeetCode-style split workspace: read-only question/source information on the left, separate solution tabs and code editor on the right, and per-solution thoughts below. Desktop panes resize with pointer or keyboard; mobile switches between Problem and Solutions. Both themes retain the blue palette.
+The library and task-detail frontend use an authenticated FastAPI workspace backed by PostgreSQL. Task titles open `/problems/<leetcode-slug>`. The split workspace has read-only question information on the left, solution tabs and a code editor on the right, and per-solution thoughts below. Desktop panes resize with pointer or keyboard. Mobile switches between Problem and Solutions. Both themes retain the blue palette.
 
-Solutions accept code, Markdown thoughts or both. Optional title, language, approach and complexity fields are available under Details. Saving is explicit; navigation warns about unsaved edits. Editing replaces the selected solution while retaining its creation date. Deleting a solution requires confirmation. Storage failures retain the current draft; unreadable saved records and conflicting writes from another tab cannot be overwritten silently.
+Solutions accept code, Markdown thoughts or both. Optional title, language, approach and complexity fields are available under Details. Saving is explicit, and navigation warns about unsaved edits. Editing replaces the selected solution while retaining its creation date. Deleting a solution requires confirmation. Failed requests keep the current draft. Version checks reject stale edits and deletes.
 
 The current catalogue provides metadata and source slugs only. Full statements, examples, constraints, hints and diagrams have not been imported. No AlgoExpert equivalence is invented.
 
@@ -48,4 +48,4 @@ For the task-description layout demonstration, Concatenation of Array alone has 
 
 The question pane follows the NeetCode-style reading layout: title and badges, description, examples, requirements and constraints. The later user instruction supersedes the earlier Platforms-row design: remove the entire Source details table, including platform controls, source slug, duplicate difficulty and unavailable-content rows. Do not show separate platform tabs or a large “Read the original problem” section. The editor save bar shows actions and save/error feedback, without static explanatory or keyboard-helper text.
 
-Login, source-content imports, backend, generated REST client and Alembic migrations remain future work. The agreed backend stack is Python, FastAPI, SQLAlchemy, PostgreSQL and Alembic.
+The single owner signs in with a password. The API persists catalogue metadata, statuses, review flags, practice history and saved solutions. Theme and default list stay browser-local. Previous browser saves can be explicitly imported, with illustrative practice excluded and existing server records taking precedence. Source-content imports remain future work.

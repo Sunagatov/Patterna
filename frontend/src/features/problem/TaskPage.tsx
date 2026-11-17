@@ -37,6 +37,7 @@ export function TaskPage({
     "problem",
   );
   const [practiceOpen, setPracticeOpen] = useState(false);
+  const [progressError, setProgressError] = useState("");
   const [split, setSplit] = useState(44);
   const panels = useRef<HTMLDivElement>(null);
   function resize(clientX: number) {
@@ -54,13 +55,20 @@ export function TaskPage({
       <header className="task-appbar">
         <Brand />
         <span className="pane-heading-spacer" />
-        <StatusSelect problem={problem} onChange={library.setStatus} />
+        <StatusSelect
+          problem={problem}
+          onChange={async (id, status) => {
+            setProgressError((await library.setStatus(id, status)) ?? "");
+          }}
+        />
         <button
           className="task-review-button"
           aria-pressed={problem.needsReview}
           aria-label="Needs review"
           title="Needs review"
-          onClick={() => library.toggleReview(problem.id)}
+          onClick={async () =>
+            setProgressError((await library.toggleReview(problem.id)) ?? "")
+          }
         >
           <Icon name="bookmark" />
           <span>Needs review</span>
@@ -80,6 +88,11 @@ export function TaskPage({
           <Icon name={theme === "light" ? "moon" : "sun"} />
         </button>
       </header>
+      {progressError ? (
+        <p className="workspace-error" role="alert">
+          {progressError}
+        </p>
+      ) : null}
       <p className="mobile-current-task">{problem.title}</p>
       <div className="mobile-workspace-switch" aria-label="Workspace view">
         <button

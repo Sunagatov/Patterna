@@ -6,8 +6,8 @@ import type { Problem } from "../types";
 
 interface Props {
   problem: Problem;
-  onLog: (id: number, date: string) => void;
-  onDelete: (id: number, entryId: string) => void;
+  onLog: (id: number, date: string) => Promise<string | null>;
+  onDelete: (id: number, entryId: string) => Promise<string | null>;
   onClose: () => void;
 }
 
@@ -30,6 +30,7 @@ export function PracticeContent({
   onDelete,
 }: Omit<Props, "onClose">) {
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
   const dateId = useId();
   return (
     <div className="practice-body">
@@ -41,8 +42,9 @@ export function PracticeContent({
         </span>
       </div>
       <form
-        onSubmit={(event) => {
+        onSubmit={async (event) => {
           event.preventDefault();
+          if (busy) return;
           const date = String(
             new FormData(event.currentTarget).get("date") ?? "",
           );
@@ -51,7 +53,9 @@ export function PracticeContent({
             return;
           }
           setError("");
-          onLog(problem.id, date);
+          setBusy(true);
+          setError((await onLog(problem.id, date)) ?? "");
+          setBusy(false);
         }}
       >
         <label htmlFor={dateId}>Practice date</label>
@@ -64,7 +68,11 @@ export function PracticeContent({
             max={today()}
             required
           />
-          <button className="button button-primary" type="submit">
+          <button
+            className="button button-primary"
+            type="submit"
+            disabled={busy}
+          >
             <Icon name="plus" />
             Log practice
           </button>
@@ -93,7 +101,12 @@ export function PracticeContent({
                 </span>
                 <button
                   className="icon-button"
-                  onClick={() => onDelete(problem.id, entry.id)}
+                  disabled={busy}
+                  onClick={async () => {
+                    setBusy(true);
+                    setError((await onDelete(problem.id, entry.id)) ?? "");
+                    setBusy(false);
+                  }}
                   aria-label={`Delete practice on ${formatDate(entry.date, true)}`}
                 >
                   <Icon name="trash" />

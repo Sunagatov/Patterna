@@ -5,9 +5,11 @@ import type { Theme } from "./useTheme";
 export function SiteHeader({
   theme,
   onToggleTheme,
+  onSignOut,
 }: {
   theme: Theme;
   onToggleTheme: () => void;
+  onSignOut: () => void;
 }) {
   const label = `Switch to ${theme === "light" ? "dark" : "light"} theme`;
   return (
@@ -28,6 +30,9 @@ export function SiteHeader({
           <span className="avatar" aria-label="Zufar">
             ZS
           </span>
+          <button className="button sign-out" onClick={onSignOut}>
+            Sign out
+          </button>
         </div>
       </div>
     </header>

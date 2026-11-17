@@ -2,16 +2,86 @@ import { LibraryPage } from "../features/library/LibraryPage";
 import { SiteHeader } from "./SiteHeader";
 import { SiteFooter } from "./SiteFooter";
 import { useTheme } from "./useTheme";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { api, ApiError, errorMessage } from "../api/client";
+import type { ApiWorkspace } from "../api/client";
+import { readBrowserImport, rememberBrowserImport } from "../api/browserImport";
+import { SignIn } from "./SignIn";
 import { useLibrary } from "../features/library/useLibrary";
 import { TaskPage } from "../features/problem/TaskPage";
 import { useSolutions } from "../features/problem/useSolutions";
 import { usePageRoute } from "./usePageRoute";
 
 export function App() {
+  const [workspace, setWorkspace] = useState<ApiWorkspace | null>();
+  const [error, setError] = useState("");
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    const controller = new AbortController();
+    api
+      .GET("/api/workspace", { signal: controller.signal })
+      .then(({ data }) => {
+        if (!controller.signal.aborted && data) setWorkspace(data);
+      })
+      .catch((failure) => {
+        if (controller.signal.aborted) return;
+        if (failure instanceof ApiError && failure.status === 401)
+          setWorkspace(null);
+        else setError(errorMessage(failure));
+      });
+    return () => controller.abort();
+  }, [attempt]);
+  if (workspace === null) return <SignIn onSignIn={setWorkspace} />;
+  if (!workspace)
+    return (
+      <main className="workspace">
+        {error ? (
+          <>
+            <p role="alert">{error}</p>
+            <button
+              className="button"
+              onClick={() => {
+                setError("");
+                setAttempt((value) => value + 1);
+              }}
+            >
+              Retry
+            </button>
+          </>
+        ) : (
+          <p role="status">Loading Patterna…</p>
+        )}
+      </main>
+    );
+  return (
+    <WorkspaceApp initial={workspace} onSignOut={() => setWorkspace(null)} />
+  );
+}
+
+function WorkspaceApp({
+  initial,
+  onSignOut,
+}: {
+  initial: ApiWorkspace;
+  onSignOut: () => void;
+}) {
   const { theme, toggleTheme } = useTheme();
-  const library = useLibrary();
-  const solutions = useSolutions();
+  const library = useLibrary(initial.problems);
+  const solutions = useSolutions(initial.solutions);
+  const [legacy] = useState(() => {
+    try {
+      return { data: readBrowserImport(), error: "" };
+    } catch {
+      return {
+        data: null,
+        error:
+          "Some older browser data could not be read. It was left in this browser.",
+      };
+    }
+  });
+  const [message, setMessage] = useState(legacy.error);
+  const [imported, setImported] = useState(false);
+  const [busy, setBusy] = useState(false);
   const route = usePageRoute();
   const path = route.url.split(/[?#]/)[0];
   const problem = library.problems.find(
@@ -71,7 +141,61 @@ export function App() {
         Skip to problems
       </a>
       {!detailRoute ? (
-        <SiteHeader theme={theme} onToggleTheme={toggleTheme} />
+        <SiteHeader
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          onSignOut={async () => {
+            try {
+              await api.DELETE("/api/session");
+              onSignOut();
+            } catch (failure) {
+              setMessage(errorMessage(failure));
+            }
+          }}
+        />
+      ) : null}
+      {!detailRoute && (message || (legacy.data && !imported)) ? (
+        <div className="account-notice">
+          {message ? <p role="status">{message}</p> : null}
+          {legacy.data && !imported ? (
+            <button
+              className="button"
+              disabled={busy}
+              onClick={async () => {
+                const payload = legacy.data;
+                if (!payload) return;
+                setBusy(true);
+                try {
+                  rememberBrowserImport(payload.id);
+                  const { data } = await api.POST("/api/browser-import", {
+                    body: payload,
+                  });
+                  if (!data) throw new Error("Missing import result");
+                  library.replaceProblems(data.problems);
+                  solutions.replaceEntries(data.solutions);
+                  setImported(true);
+                  try {
+                    localStorage.setItem(
+                      "patterna.browser-import.completed.v1",
+                      payload.id,
+                    );
+                  } catch {
+                    /* The server retains the import ID for safe retries. */
+                  }
+                  setMessage(
+                    "Browser data imported. Existing server records were kept.",
+                  );
+                } catch (failure) {
+                  setMessage(errorMessage(failure));
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              {busy ? "Importing…" : "Import previous browser data"}
+            </button>
+          ) : null}
+        </div>
       ) : null}
       <LibraryPage library={library} active={!detailRoute} />
       {problem ? (

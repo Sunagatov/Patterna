@@ -1,0 +1,1128 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Patterna API",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/session": {
+      "post": {
+        "tags": [
+          "session"
+        ],
+        "summary": "Login",
+        "operationId": "login_api_session_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Login"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "session"
+        ],
+        "summary": "Logout",
+        "operationId": "logout_api_session_delete",
+        "parameters": [
+          {
+            "name": "patterna_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Patterna Session"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/workspace": {
+      "get": {
+        "tags": [
+          "workspace"
+        ],
+        "summary": "Get Workspace",
+        "operationId": "get_workspace_api_workspace_get",
+        "parameters": [
+          {
+            "name": "patterna_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Patterna Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Workspace"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/problems/{problem_id}/progress": {
+      "patch": {
+        "tags": [
+          "workspace"
+        ],
+        "summary": "Change Progress",
+        "operationId": "change_progress_api_problems__problem_id__progress_patch",
+        "parameters": [
+          {
+            "name": "problem_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Problem Id"
+            }
+          },
+          {
+            "name": "patterna_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Patterna Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProgressPatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgressView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/problems/{problem_id}/practices/{practice_id}": {
+      "put": {
+        "tags": [
+          "workspace"
+        ],
+        "summary": "Log Practice",
+        "operationId": "log_practice_api_problems__problem_id__practices__practice_id__put",
+        "parameters": [
+          {
+            "name": "problem_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Problem Id"
+            }
+          },
+          {
+            "name": "practice_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Practice Id"
+            }
+          },
+          {
+            "name": "patterna_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Patterna Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PracticeEntry"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PracticeEntry"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "workspace"
+        ],
+        "summary": "Delete Practice",
+        "operationId": "delete_practice_api_problems__problem_id__practices__practice_id__delete",
+        "parameters": [
+          {
+            "name": "problem_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Problem Id"
+            }
+          },
+          {
+            "name": "practice_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Practice Id"
+            }
+          },
+          {
+            "name": "patterna_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Patterna Session"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/problems/{problem_id}/solutions/{solution_id}": {
+      "put": {
+        "tags": [
+          "workspace"
+        ],
+        "summary": "Save Solution",
+        "operationId": "save_solution_api_problems__problem_id__solutions__solution_id__put",
+        "parameters": [
+          {
+            "name": "problem_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Problem Id"
+            }
+          },
+          {
+            "name": "solution_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Solution Id"
+            }
+          },
+          {
+            "name": "patterna_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Patterna Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SolutionWrite"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SolutionView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "workspace"
+        ],
+        "summary": "Delete Solution",
+        "operationId": "delete_solution_api_problems__problem_id__solutions__solution_id__delete",
+        "parameters": [
+          {
+            "name": "problem_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Problem Id"
+            }
+          },
+          {
+            "name": "solution_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Solution Id"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "title": "Version"
+            }
+          },
+          {
+            "name": "patterna_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Patterna Session"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/browser-import": {
+      "post": {
+        "tags": [
+          "workspace"
+        ],
+        "summary": "Import Browser Data",
+        "operationId": "import_browser_data_api_browser_import_post",
+        "parameters": [
+          {
+            "name": "patterna_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Patterna Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Workspace"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Health",
+        "operationId": "health_api_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Health Api Health Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ApiError": {
+        "properties": {
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "ApiError"
+      },
+      "ImportPayload": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "progress": {
+            "items": {
+              "$ref": "#/components/schemas/ImportedProgress"
+            },
+            "type": "array",
+            "maxItems": 250,
+            "title": "Progress"
+          },
+          "practices": {
+            "items": {
+              "$ref": "#/components/schemas/ImportedPractice"
+            },
+            "type": "array",
+            "maxItems": 10000,
+            "title": "Practices"
+          },
+          "solutions": {
+            "items": {
+              "$ref": "#/components/schemas/ImportedSolution"
+            },
+            "type": "array",
+            "maxItems": 1000,
+            "title": "Solutions"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "progress",
+          "practices",
+          "solutions"
+        ],
+        "title": "ImportPayload"
+      },
+      "ImportedPractice": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "problemId": {
+            "type": "integer",
+            "title": "Problemid"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "date",
+          "problemId"
+        ],
+        "title": "ImportedPractice"
+      },
+      "ImportedProgress": {
+        "properties": {
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "Not started",
+                  "In progress",
+                  "Unsolved",
+                  "Solved"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "needsReview": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Needsreview"
+          },
+          "problemId": {
+            "type": "integer",
+            "title": "Problemid"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "problemId"
+        ],
+        "title": "ImportedProgress"
+      },
+      "ImportedSolution": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Title"
+          },
+          "language": {
+            "type": "string",
+            "maxLength": 40,
+            "title": "Language"
+          },
+          "approach": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Approach"
+          },
+          "timeComplexity": {
+            "type": "string",
+            "maxLength": 80,
+            "title": "Timecomplexity"
+          },
+          "spaceComplexity": {
+            "type": "string",
+            "maxLength": 80,
+            "title": "Spacecomplexity"
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 200000,
+            "title": "Code"
+          },
+          "thoughts": {
+            "type": "string",
+            "maxLength": 200000,
+            "title": "Thoughts"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "problemId": {
+            "type": "integer",
+            "title": "Problemid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Createdat"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updatedat"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "title",
+          "language",
+          "approach",
+          "timeComplexity",
+          "spaceComplexity",
+          "code",
+          "thoughts",
+          "id",
+          "problemId",
+          "createdAt",
+          "updatedAt"
+        ],
+        "title": "ImportedSolution"
+      },
+      "Login": {
+        "properties": {
+          "password": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Password"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "password"
+        ],
+        "title": "Login"
+      },
+      "PracticeEntry": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "date"
+        ],
+        "title": "PracticeEntry"
+      },
+      "ProblemView": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "Not started",
+              "In progress",
+              "Unsolved",
+              "Solved"
+            ],
+            "title": "Status"
+          },
+          "needsReview": {
+            "type": "boolean",
+            "title": "Needsreview"
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "difficulty": {
+            "type": "string",
+            "enum": [
+              "Easy",
+              "Medium",
+              "Hard",
+              "Very Hard"
+            ],
+            "title": "Difficulty"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "lcSlug": {
+            "type": "string",
+            "title": "Lcslug"
+          },
+          "ncSlug": {
+            "type": "string",
+            "title": "Ncslug"
+          },
+          "lists": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "nc250",
+                "nc150",
+                "blind75"
+              ]
+            },
+            "type": "array",
+            "title": "Lists"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags"
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/PracticeEntry"
+            },
+            "type": "array",
+            "title": "History"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "needsReview",
+          "id",
+          "title",
+          "difficulty",
+          "category",
+          "lcSlug",
+          "ncSlug",
+          "lists",
+          "tags",
+          "history"
+        ],
+        "title": "ProblemView"
+      },
+      "ProgressPatch": {
+        "properties": {
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "Not started",
+                  "In progress",
+                  "Unsolved",
+                  "Solved"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "needsReview": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Needsreview"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ProgressPatch"
+      },
+      "ProgressView": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "Not started",
+              "In progress",
+              "Unsolved",
+              "Solved"
+            ],
+            "title": "Status"
+          },
+          "needsReview": {
+            "type": "boolean",
+            "title": "Needsreview"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "needsReview"
+        ],
+        "title": "ProgressView"
+      },
+      "SolutionView": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Title"
+          },
+          "language": {
+            "type": "string",
+            "maxLength": 40,
+            "title": "Language"
+          },
+          "approach": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Approach"
+          },
+          "timeComplexity": {
+            "type": "string",
+            "maxLength": 80,
+            "title": "Timecomplexity"
+          },
+          "spaceComplexity": {
+            "type": "string",
+            "maxLength": 80,
+            "title": "Spacecomplexity"
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 200000,
+            "title": "Code"
+          },
+          "thoughts": {
+            "type": "string",
+            "maxLength": 200000,
+            "title": "Thoughts"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "problemId": {
+            "type": "integer",
+            "title": "Problemid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Createdat"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updatedat"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "title",
+          "language",
+          "approach",
+          "timeComplexity",
+          "spaceComplexity",
+          "code",
+          "thoughts",
+          "id",
+          "problemId",
+          "createdAt",
+          "updatedAt",
+          "version"
+        ],
+        "title": "SolutionView"
+      },
+      "SolutionWrite": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Title"
+          },
+          "language": {
+            "type": "string",
+            "maxLength": 40,
+            "title": "Language"
+          },
+          "approach": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Approach"
+          },
+          "timeComplexity": {
+            "type": "string",
+            "maxLength": 80,
+            "title": "Timecomplexity"
+          },
+          "spaceComplexity": {
+            "type": "string",
+            "maxLength": 80,
+            "title": "Spacecomplexity"
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 200000,
+            "title": "Code"
+          },
+          "thoughts": {
+            "type": "string",
+            "maxLength": 200000,
+            "title": "Thoughts"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Version"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "title",
+          "language",
+          "approach",
+          "timeComplexity",
+          "spaceComplexity",
+          "code",
+          "thoughts",
+          "version"
+        ],
+        "title": "SolutionWrite"
+      },
+      "Workspace": {
+        "properties": {
+          "problems": {
+            "items": {
+              "$ref": "#/components/schemas/ProblemView"
+            },
+            "type": "array",
+            "title": "Problems"
+          },
+          "solutions": {
+            "items": {
+              "$ref": "#/components/schemas/SolutionView"
+            },
+            "type": "array",
+            "title": "Solutions"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "problems",
+          "solutions"
+        ],
+        "title": "Workspace"
+      }
+    }
+  }
+}

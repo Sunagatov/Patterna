@@ -9,43 +9,28 @@ The repository was repurposed from inherited Memora code. That obsolete Kotlin/S
 ## Implemented
 
 - React + strict TypeScript + Vite in `frontend/`.
-- Main problem-library page with 250 hardcoded NeetCode tasks, overlapping NeetCode 150/Blind 75 memberships and illustrative progress.
+- Main problem-library page with 250 seeded NeetCode tasks and overlapping NeetCode 150 and Blind 75 memberships.
 - List selection, default-list star, collection progress, combined filters, search, sorting and topic accordions.
 - Independent manual task status, review flags and dated practice entries; practice can be backdated or deleted.
 - Light/dark theme preference; mobile-first rows and desktop table.
 - Header has a theme toggle and no Needs review button. The two prototype/sample labels were removed from the interface.
 - Iced Latte-inspired footer with a support link to `https://buymeacoffee.com/lucky_1uck`, reused below the task workspace as well as on the library. The demonstration caption is omitted from the question pane.
-- Browser-local progress/preferences, with no credentials stored there.
+- Single-owner sign-in and PostgreSQL workspace storage. Theme and default-list preference stay in the browser.
 - Standalone task routes at `/problems/<leetcode-slug>`, with NeetCode-style split panes, pointer/keyboard resizing and a mobile Problem/Solutions switch.
-- Multiple browser-local solutions with separate code and Markdown thoughts, optional metadata, explicit save, editing and confirmed deletion. Saving never changes status/review/practice.
-- Refresh persistence, unsaved navigation warnings, readable storage errors, corrupt-data protection and cross-tab conflict protection for solutions.
+- Multiple solutions with separate code and Markdown thoughts, optional metadata, explicit save, editing and confirmed deletion. Saving never changes status, review flags or practice.
+- Unsaved navigation warnings, draft retention on failed requests and solution version checks across sessions.
+- Explicit import of legacy browser progress, practice and solutions. The import skips demo practices and preserves existing database records.
 - Blue light/dark themes; the library no longer shows LC/NC abbreviations or dates below practice counts.
 
 ## Not implemented
 
-Password authentication, FastAPI backend, PostgreSQL database, Alembic migrations, source-content imports and generated OpenAPI frontend client are still outstanding. `backend/` is reserved for the agreed Python stack. The old preview dialog has been replaced by a standalone task page. Concatenation of Array alone has a demonstration description, two custom examples and user-supplied constraints. The later user instruction removes the entire Source details table and platform selector; do not restore placeholder rows, duplicated ratings or the large original-problem notice.
-
-No Apple Notes progress was imported. The fixture progress is not the user's real history. Lexora is only a reference for the future password-based authorization approach, not Patterna's foundation.
-
-No next implementation task has been selected; ask what the user wants to work on next rather than treating the outstanding list as an ordered implementation plan.
+Full source-content and additional catalogue imports remain outstanding. Concatenation of Array has a demonstration description, two custom examples and user-supplied constraints. The task page omits the Source details table, platform selector and large original-problem notice. No Apple Notes progress was imported.
 
 ## Run and verify
 
-```sh
-cd frontend
-npm ci
-npm run dev
-```
+See the root README and backend README for startup, migration, seed and verification commands. The frontend runs on port 5173 and proxies API requests to port 8000. The local PostgreSQL container uses port 55432.
 
-The frontend uses `http://127.0.0.1:5173/`.
-
-```sh
-npm run check
-npm test
-npm run build
-```
-
-Current validation includes strict type checking, 12 behaviour tests and the production build. Task-page browser QA covers light/dark desktop, 320px/390px mobile, multiple independent solutions, code-only and thoughts-only saves, Markdown safety, refresh persistence, edit/delete, removal of the source metadata table, manual practice/status/review independence, in-session library filters, unsaved navigation including browser Back, quota failures, corrupt storage and cross-tab write conflicts. No application console warnings/errors were observed. QA uses isolated browser contexts; no personal solution or practice data is imported by these checks.
+Verification covers frontend type checking, 12 frontend tests, the production build, four PostgreSQL integration tests and Alembic schema checks. Desktop and phone browser smoke tests use isolated contexts and a separate database to check sign-in, persistence across sessions, stale-write handling, import and sign-out.
 
 ## Existing source material
 

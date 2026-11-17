@@ -142,16 +142,19 @@ export function LibraryPage({
     );
   }
 
-  function setStatus(id: number, status: TaskStatus) {
-    library.setStatus(id, status);
-    setMessage(`Status changed to ${status.toLowerCase()}`);
+  async function setStatus(id: number, status: TaskStatus) {
+    const error = await library.setStatus(id, status);
+    setMessage(error ?? `Status changed to ${status.toLowerCase()}`);
   }
 
-  function toggleReview(id: number) {
+  async function toggleReview(id: number) {
     const problem = library.problems.find((value) => value.id === id)!;
-    library.toggleReview(id);
+    const error = await library.toggleReview(id);
     setMessage(
-      problem.needsReview ? "Removed from review" : "Marked for another review",
+      error ??
+        (problem.needsReview
+          ? "Removed from review"
+          : "Marked for another review"),
     );
   }
 
@@ -279,14 +282,8 @@ export function LibraryPage({
       {activeDialog?.kind === "practice" && activeProblem ? (
         <PracticeDialog
           problem={activeProblem}
-          onLog={(id, date) => {
-            library.logPractice(id, date);
-            setMessage("Practice logged");
-          }}
-          onDelete={(id, entryId) => {
-            library.deletePractice(id, entryId);
-            setMessage("Practice entry deleted");
-          }}
+          onLog={library.logPractice}
+          onDelete={library.deletePractice}
           onClose={() => setActiveDialog(null)}
         />
       ) : null}
