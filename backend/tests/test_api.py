@@ -1,5 +1,6 @@
 import os
 from datetime import date
+from secrets import token_urlsafe
 from uuid import uuid4
 
 import pytest
@@ -14,7 +15,7 @@ from patterna.import_details import CatalogueDetails, import_details
 from patterna.main import app
 from patterna.models import Base, Problem
 
-PASSWORD = "patterna-integration-test-password"
+PASSWORD = token_urlsafe(24)
 BROWSER_HEADERS = {"X-Patterna-Request": "1"}
 DRAFT = {
     "title": "Two copies",

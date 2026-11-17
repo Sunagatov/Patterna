@@ -67,7 +67,7 @@ export function usePageRoute() {
     history.pushState({ patternaPosition: position.current }, "", nextUrl);
     previousUrl.current = currentUrl();
     setUrl(currentUrl());
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }
 
   const setDirty = useCallback((value: boolean) => {
