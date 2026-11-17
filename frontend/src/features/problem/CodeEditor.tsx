@@ -2,9 +2,11 @@ import { useRef } from "react";
 
 export function CodeEditor({
   code,
+  readOnly,
   onChange,
 }: {
   code: string;
+  readOnly: boolean;
   onChange: (code: string) => void;
 }) {
   const gutter = useRef<HTMLPreElement>(null);
@@ -19,6 +21,7 @@ export function CodeEditor({
       <textarea
         aria-label="Solution code"
         value={code}
+        readOnly={readOnly}
         spellCheck={false}
         autoCapitalize="off"
         autoCorrect="off"
@@ -30,7 +33,7 @@ export function CodeEditor({
             gutter.current.scrollTop = event.currentTarget.scrollTop;
         }}
         onKeyDown={(event) => {
-          if (event.key !== "Tab" || event.shiftKey) return;
+          if (readOnly || event.key !== "Tab" || event.shiftKey) return;
           event.preventDefault();
           const input = event.currentTarget;
           const start = input.selectionStart;

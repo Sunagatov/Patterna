@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Icon } from "../../shared/ui/Icon";
 import { CodeEditor } from "./CodeEditor";
 import { ThoughtsEditor } from "./ThoughtsEditor";
-import { emptySolution, solutionContent } from "./solutions";
+import { emptySolution, solutionContent, validateSolution } from "./solutions";
 import type { SavedSolution, SolutionDraft } from "./solutions";
 import type { SolutionsController } from "./useSolutions";
 
@@ -29,7 +29,9 @@ export function SolutionWorkspace({
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [operation, setOperation] = useState<"save" | "delete" | null>(null);
+  const busy = operation !== null;
+  const deleting = operation === "delete";
   const newId = useRef<string | null>(null);
   const selected = entries.find((entry) => entry.id === selectedId);
   const dirty =
@@ -58,10 +60,18 @@ export function SolutionWorkspace({
   }
   async function save() {
     if (busy) return;
+    const validationError = validateSolution(draft);
+    if (validationError) {
+      setMessage("");
+      setError(validationError);
+      return;
+    }
     const id = selectedId ?? (newId.current ??= crypto.randomUUID());
-    setBusy(true);
+    setMessage("");
+    setError("");
+    setOperation("save");
     const failure = await solutions.save(problemId, id, draft);
-    setBusy(false);
+    setOperation(null);
     if (failure) {
       setError(failure);
       return;
@@ -75,13 +85,17 @@ export function SolutionWorkspace({
       busy ||
       !selected ||
       !window.confirm(
-        `Delete “${selected.title.trim() || "this solution"}”? This cannot be undone.`,
+        `Delete “${selected.title.trim() || "this solution"}”? This cannot be undone.${
+          dirty ? " Unsaved edits to this solution will also be discarded." : ""
+        }`,
       )
     )
       return;
-    setBusy(true);
+    setMessage("");
+    setError("");
+    setOperation("delete");
     const failure = await solutions.remove(selected.id);
-    setBusy(false);
+    setOperation(null);
     if (failure) {
       setError(failure);
       return;
@@ -92,7 +106,6 @@ export function SolutionWorkspace({
     setDraft(next ? solutionContent(next) : emptySolution());
     setError("");
     setMessage("Solution deleted.");
-    onDirtyChange(false);
   }
   async function copy() {
     try {
@@ -139,6 +152,7 @@ export function SolutionWorkspace({
           <select
             aria-label="Programming language"
             value={draft.language}
+            disabled={deleting}
             onChange={(event) => update({ language: event.target.value })}
           >
             {[
@@ -188,6 +202,7 @@ export function SolutionWorkspace({
             key={entry.id}
             aria-pressed={selectedId === entry.id}
             onClick={() => open(entry)}
+            disabled={busy}
             title={entry.title || `Solution ${index + 1}`}
           >
             {entry.title.trim() || `Solution ${index + 1}`}
@@ -206,6 +221,7 @@ export function SolutionWorkspace({
           onClick={() => open()}
           aria-label="Add solution"
           title="Add a separate solution"
+          disabled={busy}
         >
           <Icon name="plus" />
         </button>
@@ -216,6 +232,7 @@ export function SolutionWorkspace({
             Title
             <input
               value={draft.title}
+              readOnly={deleting}
               maxLength={120}
               onChange={(event) => update({ title: event.target.value })}
               placeholder="e.g. Iterative approach"
@@ -225,6 +242,7 @@ export function SolutionWorkspace({
             Approach labels
             <input
               value={draft.approach}
+              readOnly={deleting}
               maxLength={200}
               onChange={(event) => update({ approach: event.target.value })}
               placeholder="e.g. DFS, recursion"
@@ -234,6 +252,7 @@ export function SolutionWorkspace({
             Time complexity
             <input
               value={draft.timeComplexity}
+              readOnly={deleting}
               maxLength={80}
               onChange={(event) =>
                 update({ timeComplexity: event.target.value })
@@ -245,6 +264,7 @@ export function SolutionWorkspace({
             Space complexity
             <input
               value={draft.spaceComplexity}
+              readOnly={deleting}
               maxLength={80}
               onChange={(event) =>
                 update({ spaceComplexity: event.target.value })
@@ -266,9 +286,14 @@ export function SolutionWorkspace({
           ) : null}
         </div>
       ) : null}
-      <CodeEditor code={draft.code} onChange={(code) => update({ code })} />
+      <CodeEditor
+        code={draft.code}
+        readOnly={deleting}
+        onChange={(code) => update({ code })}
+      />
       <ThoughtsEditor
         text={draft.thoughts}
+        readOnly={deleting}
         onChange={(thoughts) => update({ thoughts })}
       />
       <div className="solution-savebar">
@@ -285,7 +310,7 @@ export function SolutionWorkspace({
           onClick={save}
           disabled={busy}
         >
-          {busy ? "Saving…" : "Save solution"}
+          {deleting ? "Deleting…" : busy ? "Saving…" : "Save solution"}
         </button>
       </div>
     </section>

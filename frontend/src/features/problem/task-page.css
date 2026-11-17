@@ -6,31 +6,20 @@
   background: var(--surface);
   overflow: hidden;
 }
-.task-appbar {
-  min-height: 52px;
-  padding: 0 16px;
+.task-header-actions {
   display: flex;
   align-items: center;
   gap: 12px;
-  flex-shrink: 0;
+  margin-left: auto;
 }
-.task-appbar .brand {
-  font-size: 20px;
-  letter-spacing: -0.8px;
-}
-.task-appbar .brand-mark {
-  width: 20px;
-  height: 20px;
-  gap: 2px;
-}
-.task-appbar .icon-button {
+.task-header-actions .icon-button {
   width: 30px;
   height: 30px;
 }
-.task-appbar .status-control {
+.task-header-actions .status-control {
   min-width: 103px;
 }
-.task-appbar .status-control select {
+.task-header-actions .status-control select {
   width: 100%;
 }
 .task-review-button,
@@ -591,28 +580,15 @@
     display: block;
     flex-shrink: 0;
     margin: 0;
-    padding: 0 12px 8px;
+    padding: 8px 12px;
     font-size: 12px;
     font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .task-appbar {
+  .task-header-actions {
     gap: 8px;
-    padding: 0 10px;
-    min-height: 48px;
-  }
-  .task-appbar .brand {
-    font-size: 0;
-    gap: 0;
-  }
-  .task-appbar .brand-mark {
-    width: 20px;
-    height: 20px;
-  }
-  .task-appbar .status-control {
-    min-width: 105px;
   }
   .task-review-button,
   .task-log-button {
@@ -711,5 +687,17 @@
   }
   .thoughts-editor {
     flex-basis: 190px;
+  }
+}
+
+@media (max-width: 420px) {
+  .task-header .header-inner {
+    display: grid;
+    grid-template-rows: var(--header-row-height) auto;
+    gap: 0;
+    padding-bottom: 8px;
+  }
+  .task-header .brand {
+    justify-self: start;
   }
 }

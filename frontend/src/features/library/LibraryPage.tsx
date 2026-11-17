@@ -249,6 +249,7 @@ export function LibraryPage({
               }
               onStatus={setStatus}
               onReview={toggleReview}
+              isProgressPending={library.isProgressPending}
               onPractice={(problemId) =>
                 setActiveDialog({ kind: "practice", problemId })
               }

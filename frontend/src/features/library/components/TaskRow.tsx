@@ -1,19 +1,23 @@
 import { Icon } from "../../../shared/ui/Icon";
 import { taskStatuses } from "../types";
 import type { Problem, TaskStatus } from "../types";
+import type { LibraryController } from "../useLibrary";
 
 export interface TaskActions {
   onStatus: (id: number, status: TaskStatus) => void;
   onReview: (id: number) => void;
   onPractice: (id: number) => void;
+  isProgressPending: LibraryController["isProgressPending"];
 }
 
 export function StatusSelect({
   problem,
   onChange,
+  disabled,
 }: {
   problem: Problem;
   onChange: (id: number, status: TaskStatus) => void;
+  disabled: boolean;
 }) {
   return (
     <div
@@ -22,6 +26,7 @@ export function StatusSelect({
       <select
         aria-label={`Status for ${problem.title}`}
         value={problem.status}
+        disabled={disabled}
         onChange={(event) =>
           onChange(problem.id, event.target.value as TaskStatus)
         }
@@ -40,6 +45,7 @@ export function TaskRow({
   onStatus,
   onReview,
   onPractice,
+  isProgressPending,
 }: TaskActions & { problem: Problem }) {
   const count = problem.history.length;
   return (
@@ -61,7 +67,11 @@ export function TaskRow({
         </span>
       </td>
       <td>
-        <StatusSelect problem={problem} onChange={onStatus} />
+        <StatusSelect
+          problem={problem}
+          onChange={onStatus}
+          disabled={isProgressPending(problem.id, "status")}
+        />
       </td>
       <td>
         <button
@@ -80,6 +90,7 @@ export function TaskRow({
         <button
           className="review-toggle"
           onClick={() => onReview(problem.id)}
+          disabled={isProgressPending(problem.id, "needsReview")}
           aria-pressed={problem.needsReview}
           aria-label={`Needs review: ${problem.title}`}
           title={problem.needsReview ? "Remove from review" : "Mark for review"}

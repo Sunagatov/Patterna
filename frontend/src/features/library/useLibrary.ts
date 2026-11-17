@@ -3,9 +3,16 @@ import { api, ApiError, errorMessage } from "../../api/client";
 import { addPractice, deletePractice } from "./library";
 import type { Problem, TaskStatus } from "./types";
 
+type ProgressChange = { status: TaskStatus } | { needsReview: boolean };
+type ProgressField = "status" | "needsReview";
+
 export function useLibrary(initial: Problem[]) {
   const [problems, setProblems] = useState(initial);
   const practiceRetries = useRef(new Map<string, string>());
+  const progressRequests = useRef(new Set<string>());
+  const [pendingProgress, setPendingProgress] = useState(
+    () => new Set<string>(),
+  );
 
   function update(id: number, change: (problem: Problem) => Problem) {
     setProblems((current) =>
@@ -22,35 +29,43 @@ export function useLibrary(initial: Problem[]) {
     }
   }
 
+  async function saveProgress(id: number, change: ProgressChange) {
+    const field = "status" in change ? "status" : "needsReview";
+    const key = `${id}:${field}`;
+    const requests = progressRequests.current;
+    if (requests.has(key)) return null;
+    requests.add(key);
+    setPendingProgress(new Set(requests));
+    try {
+      return await perform(async () => {
+        const { data } = await api.PATCH(
+          "/api/problems/{problem_id}/progress",
+          {
+            params: { path: { problem_id: id } },
+            body: change,
+          },
+        );
+        if (data)
+          update(id, (problem) => ({ ...problem, [field]: data[field] }));
+      });
+    } finally {
+      requests.delete(key);
+      setPendingProgress(new Set(requests));
+    }
+  }
+
   return {
     problems,
     replaceProblems: setProblems,
-    setStatus: (id: number, status: TaskStatus) =>
-      perform(async () => {
-        const { data } = await api.PATCH(
-          "/api/problems/{problem_id}/progress",
-          {
-            params: { path: { problem_id: id } },
-            body: { status },
-          },
-        );
-        if (data)
-          update(id, (problem) => ({ ...problem, status: data.status }));
-      }),
-    toggleReview: (id: number) =>
-      perform(async () => {
-        const problem = problems.find((item) => item.id === id);
-        if (!problem) return;
-        const { data } = await api.PATCH(
-          "/api/problems/{problem_id}/progress",
-          {
-            params: { path: { problem_id: id } },
-            body: { needsReview: !problem.needsReview },
-          },
-        );
-        if (data)
-          update(id, (item) => ({ ...item, needsReview: data.needsReview }));
-      }),
+    isProgressPending: (id: number, field: ProgressField) =>
+      pendingProgress.has(`${id}:${field}`),
+    setStatus: (id: number, status: TaskStatus) => saveProgress(id, { status }),
+    toggleReview: async (id: number) => {
+      const problem = problems.find((item) => item.id === id);
+      return problem
+        ? saveProgress(id, { needsReview: !problem.needsReview })
+        : null;
+    },
     logPractice: (id: number, date: string) =>
       perform(async () => {
         const key = `${id}:${date}`;

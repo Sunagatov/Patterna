@@ -3,9 +3,11 @@ import { FormattedThoughts } from "./FormattedThoughts";
 
 export function ThoughtsEditor({
   text,
+  readOnly,
   onChange,
 }: {
   text: string;
+  readOnly: boolean;
   onChange: (text: string) => void;
 }) {
   const [preview, setPreview] = useState(false);
@@ -42,24 +44,28 @@ export function ThoughtsEditor({
           <div className="format-tools" aria-label="Text formatting">
             <button
               aria-label="Bold"
+              disabled={readOnly}
               onClick={() => format("**", "**", "bold text")}
             >
               <b>B</b>
             </button>
             <button
               aria-label="Italic"
+              disabled={readOnly}
               onClick={() => format("*", "*", "italic text")}
             >
               <i>I</i>
             </button>
             <button
               aria-label="Inline code"
+              disabled={readOnly}
               onClick={() => format("`", "`", "code")}
             >
               &lt;/&gt;
             </button>
             <button
               aria-label="Bullet list"
+              disabled={readOnly}
               onClick={() =>
                 format(
                   text && !text.endsWith("\n") ? "\n- " : "- ",
@@ -82,6 +88,7 @@ export function ThoughtsEditor({
           ref={input}
           aria-label="Solution thoughts"
           value={text}
+          readOnly={readOnly}
           onChange={(event) => onChange(event.target.value)}
           placeholder="Explain this approach, what you learned, and what to remember…"
         />

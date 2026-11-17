@@ -153,12 +153,12 @@ def save_solution(
             .values(updated_at=now, version=Solution.version + 1, **content)
         )
     row = db.scalars(statement.returning(Solution)).one_or_none()
-    if row is None and body.version == 0:
+    if row is None:
         existing = db.get(Solution, solution_id)
         if (
             existing is not None
             and existing.problem_id == problem_id
-            and existing.version == 1
+            and existing.version == body.version + 1
             and all(getattr(existing, key) == value for key, value in content.items())
         ):
             row = existing
@@ -184,7 +184,7 @@ def delete_solution(
             Solution.version == version,
         )
     )
-    if result.rowcount != 1:
+    if result.rowcount != 1 and db.get(Solution, solution_id) is not None:
         raise HTTPException(
             409, "This solution changed elsewhere. Reload before deleting."
         )

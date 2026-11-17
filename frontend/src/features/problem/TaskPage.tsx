@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import type { CSSProperties } from "react";
-import { Brand } from "../../app/Brand";
+import { SiteHeader } from "../../app/SiteHeader";
 import type { Theme } from "../../app/useTheme";
 import { Icon } from "../../shared/ui/Icon";
 import {
@@ -52,42 +52,45 @@ export function TaskPage({
   }
   return (
     <main id="main" className="task-page">
-      <header className="task-appbar">
-        <Brand />
-        <span className="pane-heading-spacer" />
-        <StatusSelect
-          problem={problem}
-          onChange={async (id, status) => {
-            setProgressError((await library.setStatus(id, status)) ?? "");
-          }}
-        />
-        <button
-          className="task-review-button"
-          aria-pressed={problem.needsReview}
-          aria-label="Needs review"
-          title="Needs review"
-          onClick={async () =>
-            setProgressError((await library.toggleReview(problem.id)) ?? "")
-          }
-        >
-          <Icon name="bookmark" />
-          <span>Needs review</span>
-        </button>
-        <button
-          className="task-log-button"
-          onClick={() => setPracticeOpen(true)}
-        >
-          <Icon name="repeat" />
-          <span>Log practice</span>
-        </button>
-        <button
-          className="icon-button"
-          onClick={onTheme}
-          aria-label={`Switch to ${theme === "light" ? "dark" : "light"} theme`}
-        >
-          <Icon name={theme === "light" ? "moon" : "sun"} />
-        </button>
-      </header>
+      <SiteHeader className="task-header">
+        <div className="task-header-actions">
+          <StatusSelect
+            problem={problem}
+            disabled={library.isProgressPending(problem.id, "status")}
+            onChange={async (id, status) => {
+              setProgressError((await library.setStatus(id, status)) ?? "");
+            }}
+          />
+          <button
+            className="task-review-button"
+            disabled={library.isProgressPending(problem.id, "needsReview")}
+            aria-pressed={problem.needsReview}
+            aria-label="Needs review"
+            title="Needs review"
+            onClick={async () =>
+              setProgressError((await library.toggleReview(problem.id)) ?? "")
+            }
+          >
+            <Icon name="bookmark" />
+            <span>Needs review</span>
+          </button>
+          <button
+            className="task-log-button"
+            aria-label="Log practice"
+            onClick={() => setPracticeOpen(true)}
+          >
+            <Icon name="repeat" />
+            <span>Log practice</span>
+          </button>
+          <button
+            className="icon-button"
+            onClick={onTheme}
+            aria-label={`Switch to ${theme === "light" ? "dark" : "light"} theme`}
+          >
+            <Icon name={theme === "light" ? "moon" : "sun"} />
+          </button>
+        </div>
+      </SiteHeader>
       {progressError ? (
         <p className="workspace-error" role="alert">
           {progressError}

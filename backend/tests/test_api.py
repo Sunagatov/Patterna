@@ -214,11 +214,15 @@ def test_solutions_check_versions_and_preserve_contents(client):
     ).json()
     assert edited["version"] == 2
     assert edited["createdAt"] == created["createdAt"]
+    retry = client.put(path, json={**DRAFT, "code": "return result", "version": 1})
+    assert retry.status_code == 200
+    assert retry.json() == edited
     assert client.put(path, json={**DRAFT, "version": 1}).status_code == 409
     assert client.delete(path, params={"version": 1}).status_code == 409
     state = client.get("/api/workspace").json()
     assert state["solutions"] == [edited]
     assert state["problems"][0]["history"] == []
+    assert client.delete(path, params={"version": 2}).status_code == 204
     assert client.delete(path, params={"version": 2}).status_code == 204
 
 

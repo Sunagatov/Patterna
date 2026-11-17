@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { api, errorMessage } from "../api/client";
 import type { ApiWorkspace } from "../api/client";
-import { Brand } from "./Brand";
 
 export function SignIn({
   onSignIn,
@@ -12,7 +11,6 @@ export function SignIn({
   const [busy, setBusy] = useState(false);
   return (
     <main className="workspace">
-      <Brand />
       <form
         className="owner-sign-in"
         onSubmit={async (event) => {

@@ -1,5 +1,5 @@
 import { LibraryPage } from "../features/library/LibraryPage";
-import { SiteHeader } from "./SiteHeader";
+import { LibraryHeader, SiteHeader } from "./SiteHeader";
 import { SiteFooter } from "./SiteFooter";
 import { useTheme } from "./useTheme";
 import { useEffect, useState } from "react";
@@ -31,27 +31,36 @@ export function App() {
       });
     return () => controller.abort();
   }, [attempt]);
-  if (workspace === null) return <SignIn onSignIn={setWorkspace} />;
+  if (workspace === null)
+    return (
+      <>
+        <SiteHeader />
+        <SignIn onSignIn={setWorkspace} />
+      </>
+    );
   if (!workspace)
     return (
-      <main className="workspace">
-        {error ? (
-          <>
-            <p role="alert">{error}</p>
-            <button
-              className="button"
-              onClick={() => {
-                setError("");
-                setAttempt((value) => value + 1);
-              }}
-            >
-              Retry
-            </button>
-          </>
-        ) : (
-          <p role="status">Loading Patterna…</p>
-        )}
-      </main>
+      <>
+        <SiteHeader />
+        <main className="workspace">
+          {error ? (
+            <>
+              <p role="alert">{error}</p>
+              <button
+                className="button"
+                onClick={() => {
+                  setError("");
+                  setAttempt((value) => value + 1);
+                }}
+              >
+                Retry
+              </button>
+            </>
+          ) : (
+            <p role="status">Loading Patterna…</p>
+          )}
+        </main>
+      </>
     );
   return (
     <WorkspaceApp initial={workspace} onSignOut={() => setWorkspace(null)} />
@@ -141,7 +150,7 @@ function WorkspaceApp({
         Skip to problems
       </a>
       {!detailRoute ? (
-        <SiteHeader
+        <LibraryHeader
           theme={theme}
           onToggleTheme={toggleTheme}
           onSignOut={async () => {
@@ -153,6 +162,8 @@ function WorkspaceApp({
             }
           }}
         />
+      ) : !problem ? (
+        <SiteHeader />
       ) : null}
       {!detailRoute && (message || (legacy.data && !imported)) ? (
         <div className="account-notice">
