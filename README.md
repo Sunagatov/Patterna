@@ -6,7 +6,7 @@ A personal algorithm problem library and practice tracker for LeetCode, NeetCode
 
 The library has list selection, collection progress, search, combined filters, sorting, topic accordions, manual practice history, independent task statuses and review flags. Light/dark theme and default-list preferences stay in the browser.
 
-Task titles open a dedicated split workspace at `/problems/<leetcode-slug>`, with resizable desktop panes, a mobile Problem/Solutions switch, multiple saved code solutions and per-solution Markdown thoughts. Concatenation of Array includes the demonstration description, custom examples and user-provided constraints.
+Task titles open a split workspace at `/problems/<leetcode-slug>`, with resizable desktop panes, a mobile Problem/Solutions switch, multiple saved code solutions and per-solution Markdown thoughts. The question pane loads descriptions, examples and constraints from the imported catalogue. A fresh local database has a Concatenation of Array demonstration until question details are imported.
 
 A single owner password protects the catalogue and workspace. FastAPI stores statuses, review flags, dated practice and solutions in PostgreSQL. A new database starts with an empty practice history. In a browser that has previous Patterna saves, **Import previous browser data** imports saved solutions, manual practice entries and progress values that differ from the original demo. Existing server records take precedence.
 

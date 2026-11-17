@@ -81,6 +81,22 @@ class ProblemView(ProgressView):
     history: list[PracticeEntry]
 
 
+class ProblemExample(ApiModel):
+    input: str
+    output: str
+    explanation: str | None = None
+    label: str | None = None
+
+
+class ProblemQuestion(ApiModel):
+    description: list[str] = Field(min_length=1)
+    examples: list[ProblemExample]
+    constraints: list[str]
+    requirements: list[str] = Field(default_factory=list)
+    follow_ups: list[str] = Field(default_factory=list)
+    hints: list[str] = Field(default_factory=list)
+
+
 class SolutionDraft(ApiModel):
     title: str = Field(max_length=120)
     language: str = Field(max_length=40)

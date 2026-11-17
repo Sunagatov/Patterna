@@ -21,6 +21,8 @@ The editor reports a save after the database commits. Request failures retain th
 
 FastAPI defines request and response schemas. Commit the exported OpenAPI contract and regenerate TypeScript types using the commands in `backend/README.md`.
 
+The authenticated question endpoint loads one task at a time so the library response stays small. The question import matches the catalogue by LeetCode slug and stores NeetCode and LeetCode variants independently, along with the source URL, document revision and verification notes.
+
 PostgreSQL stores canonical problems, status and review flags, individual practice entries and versioned solutions. Practice and solution writes use stable IDs. Solution updates and deletions require the version last read by the client. Browser imports commit atomically, use a receipt for idempotency and preserve existing server records. Alembic manages schema changes.
 
 The owner password is verified with Argon2. An HttpOnly, SameSite=Strict cookie carries a random session token, and PostgreSQL stores only its digest and expiry. Sign-out revokes the session. Browser writes also require an application request header.

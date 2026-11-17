@@ -24,7 +24,7 @@ The repository was repurposed from inherited Memora code. That obsolete Kotlin/S
 
 ## Not implemented
 
-Full source-content and additional catalogue imports remain outstanding. Concatenation of Array has a demonstration description, two custom examples and user-supplied constraints. The task page omits the Source details table, platform selector and large original-problem notice. No Apple Notes progress was imported.
+The NeetCode 250 catalogue supplies original task descriptions, examples and constraints. LeetCode versions are stored separately, with blocked and partial verification noted in the database. The task page prefers the NeetCode question and omits platform controls. Additional study catalogues and source diagrams remain outside this import.
 
 ## Run and verify
 

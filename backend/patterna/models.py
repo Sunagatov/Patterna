@@ -32,6 +32,32 @@ class Problem(Base):
     tags: Mapped[list[str]] = mapped_column(JSON)
 
 
+class ProblemDetail(Base):
+    __tablename__ = "problem_details"
+    __table_args__ = (
+        CheckConstraint(
+            "platform IN ('neetcode', 'leetcode')", name="problem_detail_platform_valid"
+        ),
+        CheckConstraint(
+            "verification IN ('verified', 'partial', 'blocked')",
+            name="problem_detail_verification_valid",
+        ),
+        CheckConstraint(
+            "(verification = 'blocked') = (question IS NULL)",
+            name="problem_detail_question_availability",
+        ),
+    )
+    problem_id: Mapped[int] = mapped_column(ForeignKey("problems.id"), primary_key=True)
+    platform: Mapped[str] = mapped_column(String(8), primary_key=True)
+    platform_number: Mapped[int | None]
+    source_url: Mapped[str] = mapped_column(Text)
+    document_url: Mapped[str] = mapped_column(Text)
+    document_revision: Mapped[str] = mapped_column(Text)
+    verification: Mapped[str] = mapped_column(String(8))
+    question: Mapped[dict | None] = mapped_column(JSON(none_as_null=True))
+    source_notes: Mapped[list[str]] = mapped_column(JSON)
+
+
 class Progress(Base):
     __tablename__ = "progress"
     __table_args__ = (

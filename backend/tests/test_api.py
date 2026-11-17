@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from patterna.auth import failed_attempts
 from patterna.db import database
+from patterna.import_details import CatalogueDetails, import_details
 from patterna.main import app
 from patterna.models import Base, Problem
 
@@ -83,6 +84,70 @@ def login(client):
     cookie = response.headers["set-cookie"].lower()
     assert all(flag in cookie for flag in ["httponly", "secure", "samesite=strict"])
     assert not response.content
+
+
+def test_question_import_uses_stable_slug_and_prefers_neetcode(client):
+    path = "/api/problems/1/question"
+    assert client.get(path).status_code == 401
+    login(client)
+    assert client.get(path).json() is None
+    assert client.get("/api/problems/2/question").status_code == 404
+
+    catalogue = CatalogueDetails.model_validate(
+        {
+            "documentUrl": "https://docs.google.com/document/d/test",
+            "documentRevision": "revision-1",
+            "details": [
+                {
+                    "lcSlug": "concatenation-of-array",
+                    "platform": platform,
+                    "sourceUrl": source,
+                    "verification": "verified",
+                    "question": {
+                        "description": [platform],
+                        "examples": [{"input": "[1]", "output": "[1,1]"}],
+                        "constraints": [bound],
+                    },
+                }
+                for platform, source, bound in [
+                    (
+                        "neetcode",
+                        "https://neetcode.io/problems/concatenation-of-array/question",
+                        "1 <= nums.length <= 1000",
+                    ),
+                    (
+                        "leetcode",
+                        "https://leetcode.com/problems/concatenation-of-array/",
+                        "1 <= n <= 1000",
+                    ),
+                ]
+            ],
+        }
+    )
+    sessions = app.dependency_overrides[database]()
+    try:
+        db = next(sessions)
+        assert sum(import_details(db, catalogue, check_only=True).values()) == 2
+        assert client.get(path).json() is None
+        for _ in range(2):
+            assert sum(import_details(db, catalogue, check_only=False).values()) == 2
+        mismatched = catalogue.details[0].model_copy(
+            update={"source_url": "https://neetcode.io/problems/two-sum/question"}
+        )
+        with pytest.raises(ValueError, match="Source link does not match"):
+            import_details(
+                db,
+                catalogue.model_copy(update={"details": [mismatched]}),
+                check_only=False,
+            )
+    finally:
+        sessions.close()
+
+    response = client.get(path)
+    assert response.status_code == 200
+    assert response.json()["description"] == ["neetcode"]
+    assert response.json()["constraints"] == ["1 <= nums.length <= 1000"]
+    assert client.get("/api/workspace").json()["problems"][0]["status"] == "Not started"
 
 
 def test_owner_session_and_browser_write_protection(client):

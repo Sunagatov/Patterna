@@ -17,6 +17,19 @@ uv run uvicorn patterna.main:app --host 127.0.0.1 --port 8000 --reload
 
 The database uses localhost port 55432 and a named Docker volume. Rerun migrations when pulling schema changes. The seed can be run again without replacing existing catalogue rows or owner data.
 
+## Import question details
+
+Question details come from a private JSON snapshot of the Google Docs catalogue. It contains the native document URL and revision plus a list of source records. Each record identifies the existing LeetCode slug, platform, source URL, verification status, optional numeric platform ID, and the question data and provenance for that platform. A blocked source carries its provenance and a null question.
+
+Apply migrations and seed the catalogue before importing. Check the snapshot before writing it.
+
+```sh
+uv run python -m patterna.import_details --check /path/to/catalogue-details.json
+uv run python -m patterna.import_details /path/to/catalogue-details.json
+```
+
+The importer validates the source links against the seeded slugs. It updates question records by problem and platform in one transaction. Keep the snapshot outside Git. The authenticated question endpoint prefers the NeetCode record.
+
 A deployment should route the frontend and `/api` through the same HTTPS origin and leave secure cookies enabled. Set `PATTERNA_DATABASE_URL` and `PATTERNA_PASSWORD_HASH` in the runtime environment using the format in `.env.example`. The login attempt limit is process-local, so run a single API worker or enforce a shared limit at deployment.
 
 ## Verification

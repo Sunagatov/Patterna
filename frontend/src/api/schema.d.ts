@@ -39,6 +39,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/problems/{problem_id}/question": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Question */
+        get: operations["get_question_api_problems__problem_id__question_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/problems/{problem_id}/progress": {
         parameters: {
             query?: never;
@@ -224,6 +241,32 @@ export interface components {
              * Format: date
              */
             date: string;
+        };
+        /** ProblemExample */
+        ProblemExample: {
+            /** Input */
+            input: string;
+            /** Output */
+            output: string;
+            /** Explanation */
+            explanation?: string | null;
+            /** Label */
+            label?: string | null;
+        };
+        /** ProblemQuestion */
+        ProblemQuestion: {
+            /** Description */
+            description: string[];
+            /** Examples */
+            examples: components["schemas"]["ProblemExample"][];
+            /** Constraints */
+            constraints: string[];
+            /** Requirements */
+            requirements?: string[];
+            /** Followups */
+            followUps?: string[];
+            /** Hints */
+            hints?: string[];
         };
         /** ProblemView */
         ProblemView: {
@@ -422,6 +465,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Workspace"];
+                };
+            };
+            /** @description Invalid request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    get_question_api_problems__problem_id__question_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                problem_id: number;
+            };
+            cookie?: {
+                patterna_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemQuestion"] | null;
                 };
             };
             /** @description Invalid request */

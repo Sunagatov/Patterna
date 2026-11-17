@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-function inline(text: string): ReactNode[] {
+export function formatInline(text: string): ReactNode[] {
   return text.split(/(\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*)/g).map((part, index) => {
     if (part.startsWith("**") && part.endsWith("**"))
       return <strong key={index}>{part.slice(2, -2)}</strong>;
@@ -36,7 +36,9 @@ export function FormattedThoughts({ text }: { text: string }) {
         </pre>,
       );
     } else if (/^#{1,3} /.test(line)) {
-      blocks.push(<h3 key={key}>{inline(line.replace(/^#{1,3} /, ""))}</h3>);
+      blocks.push(
+        <h3 key={key}>{formatInline(line.replace(/^#{1,3} /, ""))}</h3>,
+      );
       index++;
     } else if (/^[-*] /.test(line) || /^\d+\. /.test(line)) {
       const ordered = /^\d+\. /.test(line);
@@ -44,7 +46,9 @@ export function FormattedThoughts({ text }: { text: string }) {
       const items: ReactNode[] = [];
       while (index < lines.length && pattern.test(lines[index])) {
         items.push(
-          <li key={index}>{inline(lines[index++].replace(pattern, ""))}</li>,
+          <li key={index}>
+            {formatInline(lines[index++].replace(pattern, ""))}
+          </li>,
         );
       }
       blocks.push(
@@ -59,7 +63,7 @@ export function FormattedThoughts({ text }: { text: string }) {
         !/^(#{1,3} |[-*] |\d+\. |```)/.test(lines[index])
       )
         paragraph.push(lines[index++]);
-      blocks.push(<p key={key}>{inline(paragraph.join("\n"))}</p>);
+      blocks.push(<p key={key}>{formatInline(paragraph.join("\n"))}</p>);
     }
   }
   return (

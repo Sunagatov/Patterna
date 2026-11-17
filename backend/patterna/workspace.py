@@ -8,10 +8,11 @@ from sqlalchemy import delete, select, update
 from sqlalchemy.dialects.postgresql import insert
 
 from .auth import DB, require_owner
-from .models import BrowserImport, Practice, Problem, Progress, Solution
+from .models import BrowserImport, Practice, Problem, ProblemDetail, Progress, Solution
 from .schemas import (
     ImportPayload,
     PracticeEntry,
+    ProblemQuestion,
     ProblemView,
     ProgressPatch,
     ProgressView,
@@ -65,6 +66,16 @@ def get_workspace(db: DB) -> Workspace:
 def require_problem(db: DB, problem_id: int):
     if db.get(Problem, problem_id) is None:
         raise HTTPException(404, "Problem not found")
+
+
+@router.get("/problems/{problem_id}/question")
+def get_question(problem_id: int, db: DB) -> ProblemQuestion | None:
+    require_problem(db, problem_id)
+    for platform in ("neetcode", "leetcode"):
+        details = db.get(ProblemDetail, (problem_id, platform))
+        if details and details.question is not None:
+            return ProblemQuestion.model_validate(details.question)
+    return None
 
 
 @router.patch("/problems/{problem_id}/progress")
