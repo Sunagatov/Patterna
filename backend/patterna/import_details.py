@@ -36,8 +36,8 @@ class CatalogueDetails(ApiModel):
     details: list[SourceDetail] = Field(min_length=1)
 
 
-def import_details(db: Session, catalogue: CatalogueDetails, *, check_only: bool):
-    document = urlsplit(catalogue.document_url)
+def validate_document_url(url: str):
+    document = urlsplit(url)
     if (
         document.scheme != "https"
         or document.netloc != "docs.google.com"
@@ -45,6 +45,24 @@ def import_details(db: Session, catalogue: CatalogueDetails, *, check_only: bool
     ):
         raise ValueError("Expected a native Google Docs source URL")
 
+
+def validate_problem_source(detail: SourceDetail, nc_slug: str):
+    source = urlsplit(detail.source_url)
+    host, path = (
+        ("neetcode.io", f"/problems/{nc_slug}/question")
+        if detail.platform == "neetcode"
+        else ("leetcode.com", f"/problems/{detail.lc_slug}")
+    )
+    if (
+        source.scheme != "https"
+        or source.netloc != host
+        or source.path.rstrip("/") != path
+    ):
+        raise ValueError(f"Source link does not match the catalogue: {detail.lc_slug}")
+
+
+def import_details(db: Session, catalogue: CatalogueDetails, *, check_only: bool):
+    validate_document_url(catalogue.document_url)
     problems = {problem.lc_slug: problem for problem in db.scalars(select(Problem))}
     rows = []
     seen = set()
@@ -54,18 +72,7 @@ def import_details(db: Session, catalogue: CatalogueDetails, *, check_only: bool
             raise ValueError(f"Duplicate or unknown catalogue identity: {key}")
         seen.add(key)
         problem = problems[detail.lc_slug]
-        source = urlsplit(detail.source_url)
-        host, path = (
-            ("neetcode.io", f"/problems/{problem.nc_slug}/question")
-            if detail.platform == "neetcode"
-            else ("leetcode.com", f"/problems/{problem.lc_slug}")
-        )
-        if (
-            source.scheme != "https"
-            or source.netloc != host
-            or source.path.rstrip("/") != path
-        ):
-            raise ValueError(f"Source link does not match the catalogue: {key}")
+        validate_problem_source(detail, problem.nc_slug)
         rows.append(
             {
                 "problem_id": problem.id,

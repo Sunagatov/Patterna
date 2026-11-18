@@ -24,10 +24,13 @@ interface ControlsProps {
 
 export function CollectionSelector({
   list,
+  options,
   defaultList,
   onList,
   onDefault,
-}: Pick<ControlsProps, "list" | "defaultList" | "onList" | "onDefault">) {
+}: Pick<ControlsProps, "list" | "defaultList" | "onList" | "onDefault"> & {
+  options: typeof studyLists;
+}) {
   const isDefault = list === defaultList;
   const name = studyLists.find((item) => item.id === list)!.name;
   return (
@@ -41,7 +44,7 @@ export function CollectionSelector({
           value={list}
           onChange={(event) => onList(event.target.value as LibraryListId)}
         >
-          {studyLists.map((item) => (
+          {options.map((item) => (
             <option key={item.id} value={item.id}>
               {item.name}
             </option>

@@ -15,6 +15,10 @@ from pydantic import (
 from pydantic.alias_generators import to_camel
 
 Status = Literal["Not started", "In progress", "Unsolved", "Solved"]
+Difficulty = Literal["Easy", "Medium", "Hard", "Very Hard"]
+StudyListId = Literal[
+    "nc250", "nc150", "blind75", "leetcode75", "top100liked", "topinterview150"
+]
 
 
 class ApiModel(BaseModel):
@@ -84,11 +88,11 @@ class PracticeWrite(PracticeEntry):
 class ProblemView(ProgressView):
     id: int
     title: str
-    difficulty: Literal["Easy", "Medium", "Hard", "Very Hard"]
+    difficulty: Difficulty
     category: str
     lc_slug: str
     nc_slug: str
-    lists: list[Literal["nc250", "nc150", "blind75"]]
+    lists: list[StudyListId]
     tags: list[str]
     history: list[PracticeEntry]
 

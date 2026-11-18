@@ -1157,7 +1157,10 @@
               "enum": [
                 "nc250",
                 "nc150",
-                "blind75"
+                "blind75",
+                "leetcode75",
+                "top100liked",
+                "topinterview150"
               ]
             },
             "type": "array",

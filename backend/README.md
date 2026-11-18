@@ -30,6 +30,17 @@ uv run python -m patterna.import_details /path/to/catalogue-details.json
 
 The importer validates the source links against the seeded slugs. It updates question records by problem and platform in one transaction. Keep the snapshot outside Git. The authenticated question endpoint prefers the NeetCode record.
 
+## Import additional study plans
+
+LeetCode 75, Top 100 Liked and Top Interview 150 use a private Google Docs snapshot. Each plan records its list ID, document URL, document revision and problem records with LeetCode slug, number, title, difficulty, category, tags, question details and verification status. Preview and merge the snapshot after seeding the base catalogue.
+
+```sh
+uv run python -m patterna.import_study_plans --check /path/to/study-plans.json
+uv run python -m patterna.import_study_plans /path/to/study-plans.json
+```
+
+The merge reuses existing problem IDs and adds list memberships without changing practice history, status, review flags or solutions. It adds missing LeetCode details and upgrades lower-verification versions. Keep the snapshot outside Git. Repeating the same import produces zero changes.
+
 A deployment should route the frontend and `/api` through the same HTTPS origin and leave secure cookies enabled. Set `PATTERNA_DATABASE_URL` and `PATTERNA_PASSWORD_HASH` in the runtime environment using the format in `.env.example`. The login attempt limit is process-local, so run a single API worker or enforce a shared limit at deployment.
 
 ## Verification

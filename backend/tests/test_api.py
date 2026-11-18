@@ -14,6 +14,7 @@ from patterna import schemas
 from patterna.auth import failed_attempts
 from patterna.db import database
 from patterna.import_details import CatalogueDetails, import_details
+from patterna.import_study_plans import StudyPlans, import_study_plans
 from patterna.main import app
 from patterna.models import Base, Problem
 
@@ -170,6 +171,75 @@ def test_question_import_uses_stable_slug_and_prefers_neetcode(client):
     assert response.json()["description"] == ["neetcode"]
     assert response.json()["constraints"] == ["1 <= nums.length <= 1000"]
     assert client.get("/api/workspace").json()["problems"][0]["status"] == "Not started"
+
+
+def test_study_plan_import_reuses_progress_and_is_idempotent(client):
+    login(client)
+    assert (
+        client.patch("/api/problems/1/progress", json={"status": "Solved"}).status_code
+        == 200
+    )
+    shared = {
+        "lcSlug": "concatenation-of-array",
+        "platformNumber": 1929,
+        "title": "Shared title",
+        "difficulty": "Easy",
+        "category": "Shared topic",
+        "tags": [],
+        "sourceUrl": "https://leetcode.com/problems/concatenation-of-array/",
+        "verification": "partial",
+        "question": {
+            "description": ["Existing task details"],
+            "examples": [],
+            "constraints": [],
+        },
+    }
+    new = {
+        **shared,
+        "lcSlug": "new-study-plan-task",
+        "platformNumber": 999999,
+        "title": "New study plan task",
+        "sourceUrl": "https://leetcode.com/problems/new-study-plan-task/",
+        "verification": "verified",
+        "question": {**shared["question"], "description": ["New task details"]},
+    }
+    plan = {
+        "listId": "leetcode75",
+        "documentUrl": "https://docs.google.com/document/d/study-plan",
+        "documentRevision": "revision-1",
+        "problems": [shared, new],
+    }
+    snapshot = StudyPlans.model_validate(
+        {"plans": [plan, {**plan, "listId": "topinterview150", "problems": [new]}]}
+    )
+    sessions = app.dependency_overrides[database]()
+    try:
+        db = next(sessions)
+        preview = import_study_plans(db, snapshot, check_only=True)
+        assert preview["memberships_added"] == 3
+        assert len(client.get("/api/workspace").json()["problems"]) == 1
+        assert import_study_plans(db, snapshot, check_only=False) == preview
+        repeat = import_study_plans(db, snapshot, check_only=False)
+        assert (
+            repeat["memberships_added"]
+            == repeat["question_details_added_or_upgraded"]
+            == 0
+        )
+    finally:
+        sessions.close()
+
+    old, added = client.get("/api/workspace").json()["problems"]
+    assert (old["id"], old["title"], old["status"], old["lists"]) == (
+        1,
+        "Concatenation of Array",
+        "Solved",
+        ["nc250", "leetcode75"],
+    )
+    assert added["lists"] == ["leetcode75", "topinterview150"]
+    assert not added["ncSlug"]
+    assert client.get(f"/api/problems/{added['id']}/question").json()[
+        "description"
+    ] == ["New task details"]
 
 
 def test_owner_session_and_browser_write_protection(client):

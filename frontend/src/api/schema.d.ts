@@ -306,7 +306,7 @@ export interface components {
             /** Ncslug */
             ncSlug: string;
             /** Lists */
-            lists: ("nc250" | "nc150" | "blind75")[];
+            lists: ("nc250" | "nc150" | "blind75" | "leetcode75" | "top100liked" | "topinterview150")[];
             /** Tags */
             tags: string[];
             /** History */

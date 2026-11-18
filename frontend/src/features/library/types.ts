@@ -1,3 +1,5 @@
+import type { components } from "../../api/schema";
+
 export const taskStatuses = [
   "Not started",
   "In progress",
@@ -6,7 +8,7 @@ export const taskStatuses = [
 ] as const;
 export type TaskStatus = (typeof taskStatuses)[number];
 export type Difficulty = "Easy" | "Medium" | "Hard" | "Very Hard";
-export type StudyListId = "nc250" | "nc150" | "blind75";
+export type StudyListId = components["schemas"]["ProblemView"]["lists"][number];
 export type LibraryListId = StudyListId | "all";
 export type Platform = "LeetCode" | "NeetCode" | "AlgoExpert";
 
@@ -53,6 +55,9 @@ export const studyLists: { id: LibraryListId; name: string }[] = [
   { id: "nc250", name: "NeetCode 250" },
   { id: "nc150", name: "NeetCode 150" },
   { id: "blind75", name: "Blind 75" },
+  { id: "leetcode75", name: "LeetCode 75" },
+  { id: "top100liked", name: "Top 100 Liked" },
+  { id: "topinterview150", name: "Top Interview 150" },
   { id: "all", name: "All problems" },
 ];
 

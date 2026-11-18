@@ -34,7 +34,7 @@ export function LibraryPage({
   active: boolean;
 }) {
   const [defaultList, setDefaultList] = useState(readDefaultList);
-  const [list, setList] = useState<LibraryListId>(() => {
+  const [selectedList, setList] = useState<LibraryListId>(() => {
     const requested = new URLSearchParams(location.search).get("list");
     return (
       studyLists.find((value) => value.id === requested)?.id ??
@@ -42,6 +42,12 @@ export function LibraryPage({
       "nc250"
     );
   });
+  const availableLists = studyLists.filter((item) =>
+    library.problems.some((problem) => inList(problem, item.id)) || item.id === "all",
+  );
+  const list = availableLists.some((item) => item.id === selectedList)
+    ? selectedList
+    : availableLists[0].id;
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortOrder>("list");
   const [filters, setFilters] = useState<LibraryFilters>(() => ({
@@ -181,6 +187,7 @@ export function LibraryPage({
       <section id="library" aria-label="Problem library">
         <CollectionSelector
           list={list}
+          options={availableLists}
           defaultList={defaultList}
           onList={changeList}
           onDefault={makeDefault}
