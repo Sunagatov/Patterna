@@ -6,6 +6,23 @@ import { emptySolution, solutionContent, validateSolution } from "./solutions";
 import type { SavedSolution, SolutionDraft } from "./solutions";
 import type { SolutionsController } from "./useSolutions";
 
+const languages = [
+  "Plain text",
+  "Java",
+  "Kotlin",
+  "Python",
+  "JavaScript",
+  "TypeScript",
+  "C++",
+  "C",
+  "C#",
+  "Go",
+  "Rust",
+  "Swift",
+  "Ruby",
+  "SQL",
+];
+
 interface Props {
   problemId: number;
   solutions: SolutionsController;
@@ -27,7 +44,9 @@ export function SolutionWorkspace({
     entries[0] ? solutionContent(entries[0]) : emptySolution(),
   );
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const [message, setMessage] = useState("");
+  const [notice, setNotice] = useState<"saved" | "deleted" | "copied" | null>(
+    null,
+  );
   const [error, setError] = useState("");
   const [operation, setOperation] = useState<"save" | "delete" | null>(null);
   const busy = operation !== null;
@@ -37,6 +56,16 @@ export function SolutionWorkspace({
   const dirty =
     JSON.stringify(draft) !==
     JSON.stringify(selected ? solutionContent(selected) : emptySolution());
+  const canSave = !busy && (!selected || dirty);
+  const feedback =
+    notice &&
+    {
+      saved: dirty
+        ? "Earlier edits saved. New edits are unsaved."
+        : "Solution saved.",
+      deleted: "Solution deleted.",
+      copied: "Code copied.",
+    }[notice];
 
   useEffect(() => {
     onDirtyChange(dirty);
@@ -45,7 +74,7 @@ export function SolutionWorkspace({
 
   function update(change: Partial<SolutionDraft>) {
     setDraft((current) => ({ ...current, ...change }));
-    setMessage("");
+    setNotice(null);
     setError("");
   }
   function open(entry?: SavedSolution) {
@@ -55,19 +84,19 @@ export function SolutionWorkspace({
     setSelectedId(entry?.id ?? null);
     newId.current = null;
     setDraft(entry ? solutionContent(entry) : emptySolution());
-    setMessage("");
+    setNotice(null);
     setError("");
   }
   async function save() {
-    if (busy) return;
+    if (!canSave) return;
     const validationError = validateSolution(draft);
     if (validationError) {
-      setMessage("");
+      setNotice(null);
       setError(validationError);
       return;
     }
     const id = selectedId ?? (newId.current ??= crypto.randomUUID());
-    setMessage("");
+    setNotice(null);
     setError("");
     setOperation("save");
     const failure = await solutions.save(problemId, id, draft);
@@ -78,7 +107,7 @@ export function SolutionWorkspace({
     }
     setSelectedId(id);
     setError("");
-    setMessage("Solution saved.");
+    setNotice("saved");
   }
   async function remove() {
     if (
@@ -91,7 +120,7 @@ export function SolutionWorkspace({
       )
     )
       return;
-    setMessage("");
+    setNotice(null);
     setError("");
     setOperation("delete");
     const failure = await solutions.remove(selected.id);
@@ -105,12 +134,12 @@ export function SolutionWorkspace({
     newId.current = null;
     setDraft(next ? solutionContent(next) : emptySolution());
     setError("");
-    setMessage("Solution deleted.");
+    setNotice("deleted");
   }
   async function copy() {
     try {
       await navigator.clipboard.writeText(draft.code);
-      setMessage("Code copied.");
+      setNotice("copied");
     } catch {
       setError(
         "Could not access the clipboard. Select and copy the code manually.",
@@ -155,22 +184,11 @@ export function SolutionWorkspace({
             disabled={deleting}
             onChange={(event) => update({ language: event.target.value })}
           >
-            {[
-              "Plain text",
-              "Java",
-              "Kotlin",
-              "Python",
-              "JavaScript",
-              "TypeScript",
-              "C++",
-              "C",
-              "C#",
-              "Go",
-              "Rust",
-              "Swift",
-              "Ruby",
-              "SQL",
-            ].map((language) => (
+            <option value="">No language</option>
+            {draft.language && !languages.includes(draft.language) ? (
+              <option value={draft.language}>{draft.language}</option>
+            ) : null}
+            {languages.map((language) => (
               <option key={language}>{language}</option>
             ))}
           </select>
@@ -302,13 +320,13 @@ export function SolutionWorkspace({
             className={error ? "field-error" : "detail-muted"}
             role={error ? "alert" : "status"}
           >
-            {error || message}
+            {error || feedback}
           </span>
         </div>
         <button
           className="button button-primary"
           onClick={save}
-          disabled={busy}
+          disabled={!canSave}
         >
           {deleting ? "Deleting…" : busy ? "Saving…" : "Save solution"}
         </button>

@@ -21,7 +21,10 @@ import type {
 } from "./types";
 import type { LibraryController } from "./useLibrary";
 
-type ActiveDialog = { kind: "practice"; problemId: number } | null;
+type ActiveDialog =
+  | { kind: "filters" }
+  | { kind: "practice"; problemId: number }
+  | null;
 
 export function LibraryPage({
   library,
@@ -53,7 +56,6 @@ export function LibraryPage({
           : ["Arrays & Hashing"],
       ),
   );
-  const [filtersOpen, setFiltersOpen] = useState(false);
   const [activeDialog, setActiveDialog] = useState<ActiveDialog>(null);
   const [message, setMessage] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
@@ -78,9 +80,10 @@ export function LibraryPage({
   const narrowed = Boolean(search.trim() || count);
   const allExpanded =
     topics.length > 0 && topics.every((topic) => expanded.has(topic));
-  const activeProblem = library.problems.find(
-    (problem) => problem.id === activeDialog?.problemId,
-  );
+  const activeProblem =
+    activeDialog?.kind === "practice"
+      ? library.problems.find((problem) => problem.id === activeDialog.problemId)
+      : undefined;
 
   useEffect(() => {
     if (!active) return;
@@ -96,6 +99,10 @@ export function LibraryPage({
     }
     document.addEventListener("keydown", focusSearch);
     return () => document.removeEventListener("keydown", focusSearch);
+  }, [active]);
+
+  useEffect(() => {
+    if (!active) setActiveDialog(null);
   }, [active]);
 
   useEffect(() => {
@@ -161,6 +168,7 @@ export function LibraryPage({
   return (
     <main
       id={active ? "main" : undefined}
+      tabIndex={-1}
       className="workspace"
       hidden={!active}
     >
@@ -198,7 +206,7 @@ export function LibraryPage({
           sort={sort}
           onSort={setSort}
           filterCount={count}
-          onFilters={() => setFiltersOpen(true)}
+          onFilters={() => setActiveDialog({ kind: "filters" })}
           allExpanded={allExpanded}
           onExpandAll={() =>
             setExpanded(allExpanded ? new Set() : new Set(topics))
@@ -269,18 +277,18 @@ export function LibraryPage({
           </div>
         ) : null}
       </section>
-      {filtersOpen ? (
+      {active && activeDialog?.kind === "filters" ? (
         <FilterDialog
           filters={filters}
           labels={labels}
           onApply={(next) => {
             applyFilters(next);
-            setFiltersOpen(false);
+            setActiveDialog(null);
           }}
-          onClose={() => setFiltersOpen(false)}
+          onClose={() => setActiveDialog(null)}
         />
       ) : null}
-      {activeDialog?.kind === "practice" && activeProblem ? (
+      {active && activeProblem ? (
         <PracticeDialog
           problem={activeProblem}
           onLog={library.logPractice}

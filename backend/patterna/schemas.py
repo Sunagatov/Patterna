@@ -61,6 +61,18 @@ class PracticeEntry(ApiModel):
     id: UUID
     date: date
 
+
+class PracticeWrite(PracticeEntry):
+    @field_validator("date", mode="before")
+    @classmethod
+    def require_calendar_date(cls, value):
+        if not isinstance(value, date) and (
+            not isinstance(value, str)
+            or not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", value)
+        ):
+            raise ValueError("Use a calendar date in YYYY-MM-DD format")
+        return value
+
     @field_validator("date")
     @classmethod
     def check_date(cls, value):
@@ -106,25 +118,44 @@ class SolutionDraft(ApiModel):
     code: str = Field(max_length=200_000)
     thoughts: str = Field(max_length=200_000)
 
-    @model_validator(mode="after")
-    def require_content(self):
-        if not (self.code.strip() or re.sub(r"[#*`_\s-]", "", self.thoughts)):
-            raise ValueError("Add code or thoughts before saving this solution")
-        return self
-
 
 class SolutionWrite(SolutionDraft):
     version: int = Field(ge=0)
 
+    @model_validator(mode="after")
+    def require_content(self):
+        if self.code.strip():
+            return self
+        in_fence = False
+        for line in re.split(r"\r\n?|\n", self.thoughts):
+            if line.startswith("```"):
+                in_fence = not in_fence
+                continue
+            content = (
+                line.strip() if in_fence else re.sub(r"^[0-9]+\. |[#*`_\s-]", "", line)
+            )
+            if content:
+                return self
+        raise ValueError("Add code or thoughts before saving this solution")
 
-class ImportedSolution(SolutionDraft):
+
+class SolutionRecord(SolutionDraft):
     id: UUID
     problem_id: int
     created_at: AwareDatetime
     updated_at: AwareDatetime
 
 
-class SolutionView(ImportedSolution):
+class ImportedSolution(SolutionRecord):
+    @model_validator(mode="after")
+    def require_legacy_content(self):
+        # Browser imports may contain placeholders saved by earlier releases.
+        if not (self.code.strip() or re.sub(r"[#*`_\s-]", "", self.thoughts)):
+            raise ValueError("Add code or thoughts before saving this solution")
+        return self
+
+
+class SolutionView(SolutionRecord):
     version: int
 
 
@@ -132,7 +163,7 @@ class ImportedProgress(ProgressPatch):
     problem_id: int
 
 
-class ImportedPractice(PracticeEntry):
+class ImportedPractice(PracticeWrite):
     problem_id: int
 
 

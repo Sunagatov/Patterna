@@ -15,10 +15,10 @@ export function ThoughtsEditor({
   function format(before: string, after: string, fallback: string) {
     const element = input.current;
     if (!element) return;
-    const { selectionStart: start, selectionEnd: end } = element;
-    const selected = text.slice(start, end) || fallback;
+    const { value, selectionStart: start, selectionEnd: end } = element;
+    const selected = value.slice(start, end) || fallback;
     onChange(
-      text.slice(0, start) + before + selected + after + text.slice(end),
+      value.slice(0, start) + before + selected + after + value.slice(end),
     );
     requestAnimationFrame(() => {
       element.focus();
@@ -66,13 +66,16 @@ export function ThoughtsEditor({
             <button
               aria-label="Bullet list"
               disabled={readOnly}
-              onClick={() =>
+              onClick={() => {
+                const element = input.current;
+                if (!element) return;
+                const before = element.value.slice(0, element.selectionStart);
                 format(
-                  text && !text.endsWith("\n") ? "\n- " : "- ",
+                  before && !before.endsWith("\n") ? "\n- " : "- ",
                   "",
                   "List item",
-                )
-              }
+                );
+              }}
             >
               List
             </button>

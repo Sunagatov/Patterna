@@ -51,7 +51,7 @@ export function TaskPage({
     );
   }
   return (
-    <main id="main" className="task-page">
+    <main id="main" tabIndex={-1} className="task-page">
       <SiteHeader className="task-header">
         <div className="task-header-actions">
           <StatusSelect

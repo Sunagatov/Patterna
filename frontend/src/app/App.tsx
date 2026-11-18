@@ -2,7 +2,7 @@ import { LibraryPage } from "../features/library/LibraryPage";
 import { LibraryHeader, SiteHeader } from "./SiteHeader";
 import { SiteFooter } from "./SiteFooter";
 import { useTheme } from "./useTheme";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api, ApiError, errorMessage } from "../api/client";
 import type { ApiWorkspace } from "../api/client";
 import { readBrowserImport, rememberBrowserImport } from "../api/browserImport";
@@ -93,6 +93,7 @@ function WorkspaceApp({
   const [busy, setBusy] = useState(false);
   const route = usePageRoute();
   const path = route.url.split(/[?#]/)[0];
+  const focusedPath = useRef(path);
   const problem = library.problems.find(
     (item) => path === `/problems/${encodeURIComponent(item.lcSlug)}`,
   );
@@ -103,7 +104,11 @@ function WorkspaceApp({
       : detailRoute
         ? "Problem not found · Patterna"
         : "Problem library · Patterna";
-  }, [problem?.title, detailRoute]);
+    if (focusedPath.current !== path) {
+      focusedPath.current = path;
+      document.getElementById("main")?.focus({ preventScroll: true });
+    }
+  }, [problem?.title, detailRoute, path]);
   return (
     <div
       id="top"
@@ -140,14 +145,10 @@ function WorkspaceApp({
         href="#main"
         onClick={(event) => {
           event.preventDefault();
-          const main = document.getElementById("main");
-          if (main) {
-            main.tabIndex = -1;
-            main.focus({ preventScroll: true });
-          }
+          document.getElementById("main")?.focus({ preventScroll: true });
         }}
       >
-        Skip to problems
+        Skip to content
       </a>
       {!detailRoute ? (
         <LibraryHeader
@@ -220,7 +221,7 @@ function WorkspaceApp({
           onDirtyChange={route.setDirty}
         />
       ) : detailRoute ? (
-        <main id="main" className="workspace missing-problem">
+        <main id="main" tabIndex={-1} className="workspace missing-problem">
           <h1>Problem not found</h1>
           <p>This problem isn’t in your catalogue.</p>
           <a className="button button-primary" href="/">

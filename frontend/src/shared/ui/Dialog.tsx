@@ -22,12 +22,20 @@ export function Dialog({
 
   useEffect(() => {
     const dialog = ref.current!;
+    const opener = document.activeElement;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     dialog.showModal();
     return () => {
       dialog.close();
       document.body.style.overflow = previousOverflow;
+      if (
+        document.activeElement === document.body &&
+        opener instanceof HTMLElement &&
+        opener.isConnected
+      ) {
+        opener.focus({ preventScroll: true });
+      }
     };
   }, []);
 

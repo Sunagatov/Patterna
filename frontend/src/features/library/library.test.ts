@@ -132,6 +132,7 @@ describe("library behaviour", () => {
     expect(isValidPracticeDate("2026-11-15", "2026-11-16")).toBe(true);
     expect(isValidPracticeDate("2026-11-17", "2026-11-16")).toBe(false);
     expect(isValidPracticeDate("2026-02-30", "2026-11-16")).toBe(false);
+    expect(isValidPracticeDate("0000-01-01", "2026-11-16")).toBe(false);
     expect(isValidPracticeDate("not-a-date", "2026-11-16")).toBe(false);
   });
 

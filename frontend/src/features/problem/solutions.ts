@@ -17,7 +17,7 @@ export interface SavedSolution extends SolutionDraft {
 
 export const emptySolution = (): SolutionDraft => ({
   title: "",
-  language: "Java",
+  language: "",
   approach: "",
   timeComplexity: "",
   spaceComplexity: "",
@@ -46,8 +46,21 @@ export function solutionContent(solution: SolutionDraft): SolutionDraft {
   };
 }
 
+function hasThoughtsContent(text: string): boolean {
+  let inFence = false;
+  for (const line of text.split(/\r\n?|\n/)) {
+    if (line.startsWith("```")) {
+      inFence = !inFence;
+      continue;
+    }
+    const content = inFence ? line.trim() : line.replace(/^\d+\. |[#*`_\s-]/g, "");
+    if (content) return true;
+  }
+  return false;
+}
+
 export function validateSolution(draft: SolutionDraft): string | null {
-  return draft.code.trim() || draft.thoughts.replace(/[#*`_\s-]/g, "")
+  return draft.code.trim() || hasThoughtsContent(draft.thoughts)
     ? null
     : "Add code or thoughts before saving this solution.";
 }
@@ -85,6 +98,7 @@ export function loadSolutions(storage: BrowserStorage): SavedSolution[] {
   const parsed: unknown = JSON.parse(raw);
   if (!Array.isArray(parsed)) throw new Error("Invalid saved solutions");
   const ids = new Set<string>();
+  // Use the earlier content rule for solutions already saved in the browser.
   for (const entry of parsed) {
     if (
       typeof entry !== "object" ||
@@ -107,7 +121,7 @@ export function loadSolutions(storage: BrowserStorage): SavedSolution[] {
       ids.has(entry.id) ||
       !Number.isFinite(Date.parse(entry.createdAt)) ||
       !Number.isFinite(Date.parse(entry.updatedAt)) ||
-      validateSolution(entry)
+      !(entry.code.trim() || entry.thoughts.replace(/[#*`_\s-]/g, ""))
     ) {
       throw new Error("Invalid saved solution");
     }

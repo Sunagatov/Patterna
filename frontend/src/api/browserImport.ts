@@ -7,6 +7,13 @@ const importKey = "patterna.browser-import.v1";
 const uuid = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
 
 export function readBrowserImport(): BrowserImport | null {
+  const savedId = localStorage.getItem(importKey);
+  if (
+    savedId &&
+    localStorage.getItem("patterna.browser-import.completed.v1") === savedId
+  )
+    return null;
+
   const problems = readProblems();
   const progress: BrowserImport["progress"] = [];
   const practices: BrowserImport["practices"] = [];
@@ -20,20 +27,15 @@ export function readBrowserImport(): BrowserImport | null {
         : undefined;
     if (status !== undefined || needsReview !== undefined)
       progress.push({ problemId: problem.id, status, needsReview });
-    practices.push(
-      ...problem.history
-        .filter((entry) => uuid.test(entry.id))
-        .map((entry) => ({ ...entry, problemId: problem.id })),
-    );
+    const sampleIds = new Set(fixture.history.map((entry) => entry.id));
+    for (const entry of problem.history) {
+      if (sampleIds.has(entry.id)) continue;
+      if (!uuid.test(entry.id)) throw new Error("Invalid saved practice ID");
+      practices.push({ ...entry, problemId: problem.id });
+    }
   }
   const solutions = loadSolutions(localStorage);
   if (!progress.length && !practices.length && !solutions.length) return null;
-  const savedId = localStorage.getItem(importKey);
-  if (
-    savedId &&
-    localStorage.getItem("patterna.browser-import.completed.v1") === savedId
-  )
-    return null;
   const id = savedId && uuid.test(savedId) ? savedId : crypto.randomUUID();
   return { id, progress, practices, solutions };
 }

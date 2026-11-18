@@ -4,7 +4,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, or_, select, update
 from sqlalchemy.dialects.postgresql import insert
 
 from .auth import DB, require_owner
@@ -12,6 +12,7 @@ from .models import BrowserImport, Practice, Problem, ProblemDetail, Progress, S
 from .schemas import (
     ImportPayload,
     PracticeEntry,
+    PracticeWrite,
     ProblemQuestion,
     ProblemView,
     ProgressPatch,
@@ -95,7 +96,7 @@ def change_progress(problem_id: int, body: ProgressPatch, db: DB) -> ProgressVie
 
 @router.put("/problems/{problem_id}/practices/{practice_id}")
 def log_practice(
-    problem_id: int, practice_id: UUID, body: PracticeEntry, db: DB
+    problem_id: int, practice_id: UUID, body: PracticeWrite, db: DB
 ) -> PracticeEntry:
     require_problem(db, problem_id)
     if practice_id != body.id:
@@ -143,12 +144,19 @@ def save_solution(
             .on_conflict_do_nothing()
         )
     else:
+        changed = or_(
+            *(
+                getattr(Solution, key).is_distinct_from(value)
+                for key, value in content.items()
+            )
+        )
         statement = (
             update(Solution)
             .where(
                 Solution.id == solution_id,
                 Solution.problem_id == problem_id,
                 Solution.version == body.version,
+                changed,
             )
             .values(updated_at=now, version=Solution.version + 1, **content)
         )
@@ -158,7 +166,7 @@ def save_solution(
         if (
             existing is not None
             and existing.problem_id == problem_id
-            and existing.version == body.version + 1
+            and existing.version in (body.version, body.version + 1)
             and all(getattr(existing, key) == value for key, value in content.items())
         ):
             row = existing
@@ -210,15 +218,25 @@ def import_browser_data(body: ImportPayload, db: DB) -> Workspace:
         raise HTTPException(
             422, "The import references a problem outside the current catalogue"
         )
-    for model, entries in [
-        (Progress, body.progress),
-        (Practice, body.practices),
-        (Solution, body.solutions),
+    for model, entries, key, label in [
+        (Progress, body.progress, "problem_id", "progress"),
+        (Practice, body.practices, "id", "practice"),
+        (Solution, body.solutions, "id", "solution"),
     ]:
-        if entries:
-            statement = insert(model).on_conflict_do_nothing()
-            # Optional progress fields can be absent independently.
-            for entry in entries:
-                db.execute(statement.values(**entry.model_dump(exclude_none=True)))
+        if not entries:
+            continue
+        unique = {}
+        for entry in entries:
+            identity = getattr(entry, key)
+            if identity in unique and unique[identity] != entry:
+                raise HTTPException(
+                    422,
+                    f"The import contains conflicting {label} records for the same ID",
+                )
+            unique[identity] = entry
+        statement = insert(model).on_conflict_do_nothing()
+        # Optional progress fields can be absent independently.
+        for entry in unique.values():
+            db.execute(statement.values(**entry.model_dump(exclude_none=True)))
     db.commit()
     return snapshot(db)

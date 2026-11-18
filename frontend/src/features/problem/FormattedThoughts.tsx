@@ -14,7 +14,7 @@ export function formatInline(text: string): ReactNode[] {
 
 // Deliberately render text through React; saved thoughts never become raw HTML.
 export function FormattedThoughts({ text }: { text: string }) {
-  const lines = text.replaceAll("\r\n", "\n").split("\n");
+  const lines = text.split(/\r\n?|\n/);
   const blocks: ReactNode[] = [];
   let index = 0;
   while (index < lines.length) {
@@ -43,6 +43,7 @@ export function FormattedThoughts({ text }: { text: string }) {
     } else if (/^[-*] /.test(line) || /^\d+\. /.test(line)) {
       const ordered = /^\d+\. /.test(line);
       const pattern = ordered ? /^\d+\. / : /^[-*] /;
+      const start = Number.parseInt(line, 10);
       const items: ReactNode[] = [];
       while (index < lines.length && pattern.test(lines[index])) {
         items.push(
@@ -52,7 +53,13 @@ export function FormattedThoughts({ text }: { text: string }) {
         );
       }
       blocks.push(
-        ordered ? <ol key={key}>{items}</ol> : <ul key={key}>{items}</ul>,
+        ordered ? (
+          <ol key={key} start={Number.isSafeInteger(start) ? start : undefined}>
+            {items}
+          </ol>
+        ) : (
+          <ul key={key}>{items}</ul>
+        ),
       );
     } else {
       const paragraph: string[] = [line];

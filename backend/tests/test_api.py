@@ -1,5 +1,5 @@
 import os
-from datetime import date
+from datetime import date, datetime, timedelta
 from secrets import token_urlsafe
 from uuid import uuid4
 
@@ -7,8 +7,10 @@ import pytest
 from argon2 import PasswordHasher
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, text
+from sqlalchemy.exc import OperationalError, TimeoutError
 from sqlalchemy.orm import Session
 
+from patterna import schemas
 from patterna.auth import failed_attempts
 from patterna.db import database
 from patterna.import_details import CatalogueDetails, import_details
@@ -85,6 +87,25 @@ def login(client):
     cookie = response.headers["set-cookie"].lower()
     assert all(flag in cookie for flag in ["httponly", "secure", "samesite=strict"])
     assert not response.content
+
+
+@pytest.mark.parametrize(
+    "failure",
+    [OperationalError(None, None, ConnectionError()), TimeoutError()],
+)
+def test_database_unavailability_returns_a_retryable_response(monkeypatch, failure):
+    def unavailable():
+        raise failure
+
+    monkeypatch.setitem(app.dependency_overrides, database, unavailable)
+    with TestClient(app, raise_server_exceptions=False) as browser:
+        for path in ("/api/health", "/api/workspace"):
+            response = browser.get(path)
+            assert response.status_code == 503
+            assert response.json() == {
+                "detail": "The database is temporarily unavailable. Try again."
+            }
+            assert response.headers["cache-control"] == "no-store"
 
 
 def test_question_import_uses_stable_slug_and_prefers_neetcode(client):
@@ -177,6 +198,21 @@ def test_owner_session_and_browser_write_protection(client):
     )
 
 
+def test_invalid_password_hash_does_not_consume_login_attempt(client, monkeypatch):
+    configured_hash = os.environ["PATTERNA_PASSWORD_HASH"]
+    malformed_hash = configured_hash.rsplit("$", 1)[0] + "$!"
+    with monkeypatch.context() as config:
+        config.setenv("PATTERNA_PASSWORD_HASH", malformed_hash)
+        response = client.post("/api/session", json={"password": PASSWORD})
+        assert response.status_code == 503
+        assert (
+            response.json()["detail"]
+            == "The configured password hash could not be verified"
+        )
+        assert not failed_attempts
+    login(client)
+
+
 def test_progress_and_practices_are_independent_and_retryable(client):
     login(client)
     progress = "/api/problems/1/progress"
@@ -200,6 +236,49 @@ def test_progress_and_practices_are_independent_and_retryable(client):
     assert client.get("/api/workspace").json()["problems"][0]["history"] == []
 
 
+@pytest.mark.parametrize("invalid_date", [0, "86400", "2026-11-01T00:00:00Z"])
+def test_practice_requires_an_iso_calendar_date(client, invalid_date):
+    login(client)
+    entry = {"id": str(uuid4()), "date": invalid_date}
+    path = f"/api/problems/1/practices/{entry['id']}"
+    assert client.put(path, json=entry).status_code == 422
+    imported = {
+        "id": str(uuid4()),
+        "progress": [],
+        "practices": [{**entry, "problemId": 1}],
+        "solutions": [],
+    }
+    assert client.post("/api/browser-import", json=imported).status_code == 422
+    assert client.get("/api/workspace").json()["problems"][0]["history"] == []
+
+
+def test_saved_practice_remains_readable_after_clock_moves_back(client, monkeypatch):
+    clock = datetime(2026, 11, 1, 0, 1)
+
+    class PracticeClock(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return clock.replace(tzinfo=tz)
+
+    monkeypatch.setattr(schemas, "datetime", PracticeClock)
+    login(client)
+    entry = {"id": str(uuid4()), "date": "2026-11-01"}
+    path = f"/api/problems/1/practices/{entry['id']}"
+    assert client.put(path, json=entry).status_code == 200
+
+    clock -= timedelta(minutes=2)
+    workspace = client.get("/api/workspace")
+    assert workspace.status_code == 200
+    assert workspace.json()["problems"][0]["history"] == [entry]
+    new_id = str(uuid4())
+    assert (
+        client.put(
+            f"/api/problems/1/practices/{new_id}", json={**entry, "id": new_id}
+        ).status_code
+        == 422
+    )
+
+
 def test_solutions_check_versions_and_preserve_contents(client):
     login(client)
     path = f"/api/problems/1/solutions/{uuid4()}"
@@ -210,6 +289,9 @@ def test_solutions_check_versions_and_preserve_contents(client):
     created = client.put(path, json={**DRAFT, "version": 0}).json()
     assert created["version"] == 1
     assert client.put(path, json={**DRAFT, "version": 0}).json() == created
+    unchanged = client.put(path, json={**DRAFT, "version": 1})
+    assert unchanged.status_code == 200
+    assert unchanged.json() == created
     edited = client.put(
         path, json={**DRAFT, "code": "return result", "version": 1}
     ).json()
@@ -225,6 +307,39 @@ def test_solutions_check_versions_and_preserve_contents(client):
     assert state["problems"][0]["history"] == []
     assert client.delete(path, params={"version": 2}).status_code == 204
     assert client.delete(path, params={"version": 2}).status_code == 204
+
+
+@pytest.mark.parametrize("thoughts", ["1. \n2. ", "```python\n```", "```text\r\n  \r\n```"])
+def test_solution_write_requires_visible_content(client, thoughts):
+    login(client)
+    path = f"/api/problems/1/solutions/{uuid4()}"
+    response = client.put(path, json={**DRAFT, "thoughts": thoughts, "version": 0})
+    assert response.status_code == 422
+
+    visible_fence = "```\n---\n```"
+    response = client.put(path, json={**DRAFT, "thoughts": visible_fence, "version": 0})
+    assert response.status_code == 200
+    assert response.json()["thoughts"] == visible_fence
+
+
+def test_legacy_placeholder_solution_remains_readable_and_editable(client):
+    login(client)
+    solution = {
+        **DRAFT,
+        "thoughts": "1. ",
+        "id": str(uuid4()),
+        "problemId": 1,
+        "createdAt": "2026-11-01T10:00:00Z",
+        "updatedAt": "2026-11-01T10:00:00Z",
+    }
+    response = client.post(
+        "/api/browser-import",
+        json={"id": str(uuid4()), "progress": [], "practices": [], "solutions": [solution]},
+    )
+    assert response.status_code == 200
+    assert client.get("/api/workspace").json()["solutions"][0]["thoughts"] == "1. "
+    path = f"/api/problems/1/solutions/{solution['id']}"
+    assert client.put(path, json={**DRAFT, "version": 1}).status_code == 200
 
 
 def test_import_is_atomic_retryable_and_keeps_existing_progress(client):
@@ -265,3 +380,49 @@ def test_import_is_atomic_retryable_and_keeps_existing_progress(client):
     retry = client.post("/api/browser-import", json=payload)
     assert retry.json()["problems"][0]["history"] == []
     assert len(retry.json()["solutions"]) == 1
+
+
+@pytest.mark.parametrize(
+    ("section", "change"),
+    [
+        ("progress", {"status": "Unsolved"}),
+        ("practices", {"date": "2026-11-02"}),
+        ("solutions", {"thoughts": "A different solution"}),
+    ],
+)
+def test_browser_import_rejects_conflicting_duplicates_atomically(
+    client, section, change
+):
+    login(client)
+    practice = {"id": str(uuid4()), "problemId": 1, "date": "2026-11-01"}
+    payload = {
+        "id": str(uuid4()),
+        "progress": [{"problemId": 1, "status": "Solved"}],
+        "practices": [practice],
+        "solutions": [
+            {
+                **DRAFT,
+                "id": str(uuid4()),
+                "problemId": 1,
+                "createdAt": "2026-11-01T10:00:00Z",
+                "updatedAt": "2026-11-01T10:00:00Z",
+            }
+        ],
+    }
+    original = payload[section][0]
+    bad_payload = {**payload, section: [original, {**original, **change}]}
+    assert client.post("/api/browser-import", json=bad_payload).status_code == 422
+    state = client.get("/api/workspace").json()
+    assert state["problems"][0]["status"] == "Not started"
+    assert state["problems"][0]["history"] == []
+    assert state["solutions"] == []
+
+    corrected = {**payload, section: [original, original]}
+    response = client.post("/api/browser-import", json=corrected)
+    assert response.status_code == 200
+    state = response.json()
+    assert state["problems"][0]["status"] == "Solved"
+    assert state["problems"][0]["history"] == [
+        {"id": practice["id"], "date": practice["date"]}
+    ]
+    assert len(state["solutions"]) == 1

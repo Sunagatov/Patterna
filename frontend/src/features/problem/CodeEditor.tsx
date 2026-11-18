@@ -14,7 +14,7 @@ export function CodeEditor({
     <div className="code-editor">
       <pre className="line-numbers" aria-hidden="true" ref={gutter}>
         {Array.from(
-          { length: code.split("\n").length },
+          { length: code.split(/\r\n?|\n/).length },
           (_, index) => index + 1,
         ).join("\n")}
       </pre>
@@ -36,10 +36,8 @@ export function CodeEditor({
           if (readOnly || event.key !== "Tab" || event.shiftKey) return;
           event.preventDefault();
           const input = event.currentTarget;
-          const start = input.selectionStart;
-          onChange(
-            code.slice(0, start) + "  " + code.slice(input.selectionEnd),
-          );
+          const { value, selectionStart: start, selectionEnd: end } = input;
+          onChange(value.slice(0, start) + "  " + value.slice(end));
           requestAnimationFrame(() =>
             input.setSelectionRange(start + 2, start + 2),
           );

@@ -25,15 +25,12 @@ function isEntry(value: unknown): value is PracticeEntry {
 }
 
 export function readProblems(): Problem[] {
-  let saved: unknown;
-  try {
-    saved = JSON.parse(localStorage.getItem(progressKey) ?? "null");
-  } catch {
-    saved = null;
-  }
-  const progress = isRecord(saved) ? saved : {};
+  const progress: unknown = JSON.parse(localStorage.getItem(progressKey) ?? "{}");
+  if (!isRecord(progress)) throw new Error("Invalid saved progress");
   return initialProblems.map((problem) => {
     const record = progress[String(problem.id)];
+    if (record === undefined)
+      return { ...problem, history: [...problem.history] };
     if (
       !isRecord(record) ||
       !taskStatuses.includes(record.status as TaskStatus) ||
@@ -41,17 +38,20 @@ export function readProblems(): Problem[] {
       !Array.isArray(record.history) ||
       !record.history.every(isEntry)
     ) {
-      return { ...problem, history: [...problem.history] };
+      throw new Error("Invalid saved problem progress");
     }
-    const history = record.history.filter(
-      (entry, index, entries) =>
-        entries.findIndex((value) => value.id === entry.id) === index,
-    );
+    const practices = new Map<string, PracticeEntry>();
+    for (const entry of record.history) {
+      const existing = practices.get(entry.id);
+      if (existing && existing.date !== entry.date)
+        throw new Error("Conflicting saved practice dates");
+      practices.set(entry.id, entry);
+    }
     return {
       ...problem,
       status: record.status as TaskStatus,
       needsReview: record.needsReview,
-      history,
+      history: [...practices.values()],
     };
   });
 }

@@ -62,6 +62,19 @@ describe("personal solutions", () => {
     expect(first).toHaveLength(1);
   });
 
+  it("requires content inside numbered items and fences on new saves", () => {
+    for (const thoughts of ["1. \n2. ", "```python\n```", "```text\r\n  \r\n```"])
+      expect(validateSolution({ ...emptySolution(), thoughts })).toBeTruthy();
+    for (const thoughts of ["7. First step", "1.", "```\n---\n```"])
+      expect(validateSolution({ ...emptySolution(), thoughts })).toBeNull();
+  });
+
+  it("reads older browser saves that contain a Markdown placeholder", () => {
+    const [entry] = saveSolutionEntry([], draft, 1, "old", firstDate);
+    const legacy = { ...entry, code: "", thoughts: "1. " };
+    expect(loadSolutions(memoryStorage(JSON.stringify([legacy])))).toEqual([legacy]);
+  });
+
   it("edits only the selected solution while preserving its creation date", () => {
     const first = saveSolutionEntry([], draft, 1, "dfs", firstDate);
     const two = saveSolutionEntry(

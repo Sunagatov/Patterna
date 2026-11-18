@@ -7,7 +7,7 @@ from time import monotonic
 from typing import Annotated
 
 from argon2 import PasswordHasher
-from argon2.exceptions import InvalidHashError, VerificationError
+from argon2.exceptions import InvalidHashError, VerificationError, VerifyMismatchError
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Response
 from sqlalchemy import delete
 from sqlalchemy.orm import Session
@@ -54,13 +54,13 @@ def login(body: Login, response: Response, db: DB):
             )
         try:
             hasher.verify(password_hash, body.password)
-        except InvalidHashError:
-            raise HTTPException(
-                503, "The configured password hash is invalid"
-            ) from None
-        except VerificationError:
+        except VerifyMismatchError:
             failed_attempts.append(now)
             raise HTTPException(401, "Incorrect password") from None
+        except (InvalidHashError, VerificationError):
+            raise HTTPException(
+                503, "The configured password hash could not be verified"
+            ) from None
         failed_attempts.clear()
 
     token = secrets.token_urlsafe(32)
