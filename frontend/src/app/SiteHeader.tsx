@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from "react";
 import type { ReactNode } from "react";
 import { Brand } from "./Brand";
 import { Icon } from "../shared/ui/Icon";
@@ -10,8 +11,29 @@ export function SiteHeader({
   children?: ReactNode;
   className?: string;
 }) {
+  const ref = useRef<HTMLElement>(null);
+
+  useLayoutEffect(() => {
+    const header = ref.current;
+    if (!header) return;
+    const root = document.documentElement;
+    const syncHeight = () => {
+      root.style.setProperty(
+        "--site-header-height",
+        `${header.offsetHeight}px`,
+      );
+    };
+    syncHeight();
+    const observer = new ResizeObserver(syncHeight);
+    observer.observe(header, { box: "border-box" });
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty("--site-header-height");
+    };
+  }, []);
+
   return (
-    <header className={`site-header ${className}`}>
+    <header ref={ref} className={`site-header ${className}`}>
       <div className="header-inner">
         <Brand />
         {children}

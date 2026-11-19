@@ -31,6 +31,7 @@
     "Segoe UI",
     sans-serif;
   color-scheme: light;
+  --site-header-height: 68px;
   font-synthesis: none;
   --background: #ffffff;
   --surface: #f7f9fc;
@@ -93,7 +94,7 @@
 }
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 25px;
+  scroll-padding-top: calc(var(--site-header-height) + 12px);
   background: var(--background);
 }
 body {
@@ -192,6 +193,9 @@ select:focus-visible {
 
 .site-header {
   --header-row-height: 67px;
+  position: sticky;
+  top: 0;
+  z-index: 20;
   flex-shrink: 0;
   border-bottom: 1px solid var(--border);
   background: var(--background);
@@ -1403,7 +1407,6 @@ legend {
 
 @media (min-width: 601px) {
   html {
-    scroll-padding-top: 100px;
     scrollbar-gutter: stable;
   }
   .site-header {

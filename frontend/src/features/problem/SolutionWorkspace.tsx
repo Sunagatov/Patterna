@@ -1,27 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "../../shared/ui/Icon";
-import { CodeEditor } from "./CodeEditor";
+import { CodeEditor, codeLanguages } from "./CodeEditor";
+import type { FormatRequest, FormatResult } from "./formatCode.worker";
 import { ThoughtsEditor } from "./ThoughtsEditor";
 import { emptySolution, solutionContent, validateSolution } from "./solutions";
 import type { SavedSolution, SolutionDraft } from "./solutions";
 import type { SolutionsController } from "./useSolutions";
-
-const languages = [
-  "Plain text",
-  "Java",
-  "Kotlin",
-  "Python",
-  "JavaScript",
-  "TypeScript",
-  "C++",
-  "C",
-  "C#",
-  "Go",
-  "Rust",
-  "Swift",
-  "Ruby",
-  "SQL",
-];
 
 interface Props {
   problemId: number;
@@ -44,19 +28,22 @@ export function SolutionWorkspace({
     entries[0] ? solutionContent(entries[0]) : emptySolution(),
   );
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const [notice, setNotice] = useState<"saved" | "deleted" | "copied" | null>(
-    null,
-  );
+  const [notice, setNotice] = useState<
+    "saved" | "deleted" | "copied" | "formatted" | "already-formatted" | null
+  >(null);
   const [error, setError] = useState("");
+  const [formatting, setFormatting] = useState(false);
   const [operation, setOperation] = useState<"save" | "delete" | null>(null);
   const busy = operation !== null;
   const deleting = operation === "delete";
   const newId = useRef<string | null>(null);
+  const formatWorker = useRef<Worker | null>(null);
+  const formatLanguage = codeLanguages.get(draft.language);
   const selected = entries.find((entry) => entry.id === selectedId);
   const dirty =
     JSON.stringify(draft) !==
     JSON.stringify(selected ? solutionContent(selected) : emptySolution());
-  const canSave = !busy && (!selected || dirty);
+  const canSave = !busy && !formatting && (!selected || dirty);
   const feedback =
     notice &&
     {
@@ -65,6 +52,8 @@ export function SolutionWorkspace({
         : "Solution saved.",
       deleted: "Solution deleted.",
       copied: "Code copied.",
+      formatted: "Code formatted. Save solution to keep the changes.",
+      "already-formatted": "Code is already formatted.",
     }[notice];
 
   useEffect(() => {
@@ -72,7 +61,18 @@ export function SolutionWorkspace({
     return () => onDirtyChange(false);
   }, [dirty, onDirtyChange]);
 
+  useEffect(() => () => formatWorker.current?.terminate(), []);
+
+  function stopFormatting() {
+    if (!formatWorker.current) return;
+    formatWorker.current.terminate();
+    formatWorker.current = null;
+    setFormatting(false);
+  }
+
   function update(change: Partial<SolutionDraft>) {
+    if (change.code !== undefined || change.language !== undefined)
+      stopFormatting();
     setDraft((current) => ({ ...current, ...change }));
     setNotice(null);
     setError("");
@@ -81,6 +81,7 @@ export function SolutionWorkspace({
     if (busy) return;
     if (dirty && !window.confirm("Discard your unsaved solution changes?"))
       return;
+    stopFormatting();
     setSelectedId(entry?.id ?? null);
     newId.current = null;
     setDraft(entry ? solutionContent(entry) : emptySolution());
@@ -112,6 +113,7 @@ export function SolutionWorkspace({
   async function remove() {
     if (
       busy ||
+      formatting ||
       !selected ||
       !window.confirm(
         `Delete “${selected.title.trim() || "this solution"}”? This cannot be undone.${
@@ -145,6 +147,52 @@ export function SolutionWorkspace({
         "Could not access the clipboard. Select and copy the code manually.",
       );
     }
+  }
+
+  function formatDraft() {
+    if (!formatLanguage || !draft.code.trim() || busy || formatWorker.current)
+      return;
+
+    const request: FormatRequest = {
+      code: draft.code,
+      language: formatLanguage,
+    };
+    const fail = () =>
+      setError(
+        `Could not format ${draft.language} code. Check its syntax and try again.`,
+      );
+    setNotice(null);
+    setError("");
+
+    let worker: Worker;
+    try {
+      worker = new Worker(new URL("./formatCode.worker.ts", import.meta.url), {
+        type: "module",
+      });
+    } catch {
+      fail();
+      return;
+    }
+    formatWorker.current = worker;
+    setFormatting(true);
+    worker.onmessage = ({ data }: MessageEvent<FormatResult>) => {
+      if (formatWorker.current !== worker) return;
+      stopFormatting();
+      if ("error" in data) {
+        fail();
+      } else if (data.code === request.code) {
+        setNotice("already-formatted");
+      } else {
+        update({ code: data.code });
+        setNotice("formatted");
+      }
+    };
+    worker.onerror = () => {
+      if (formatWorker.current !== worker) return;
+      stopFormatting();
+      fail();
+    };
+    worker.postMessage(request);
   }
 
   return (
@@ -185,10 +233,10 @@ export function SolutionWorkspace({
             onChange={(event) => update({ language: event.target.value })}
           >
             <option value="">No language</option>
-            {draft.language && !languages.includes(draft.language) ? (
+            {draft.language && !codeLanguages.has(draft.language) ? (
               <option value={draft.language}>{draft.language}</option>
             ) : null}
-            {languages.map((language) => (
+            {Array.from(codeLanguages.keys(), (language) => (
               <option key={language}>{language}</option>
             ))}
           </select>
@@ -197,6 +245,19 @@ export function SolutionWorkspace({
           {dirty ? "Unsaved changes" : selected ? "Saved" : "New solution"}
         </span>
         <span className="pane-heading-spacer" />
+        <button
+          type="button"
+          className="workspace-text-button format-code-button"
+          title={
+            formatLanguage
+              ? undefined
+              : "Select a programming language to format code"
+          }
+          onClick={formatDraft}
+          disabled={!formatLanguage || !draft.code.trim() || busy || formatting}
+        >
+          {formatting ? "Formatting…" : "Format code"}
+        </button>
         <button
           className="icon-button"
           onClick={() => void copy()}
@@ -209,7 +270,7 @@ export function SolutionWorkspace({
           className="icon-button"
           onClick={remove}
           aria-label="Delete selected solution"
-          disabled={!selected || busy}
+          disabled={!selected || busy || formatting}
         >
           <Icon name="trash" />
         </button>
@@ -306,6 +367,7 @@ export function SolutionWorkspace({
       ) : null}
       <CodeEditor
         code={draft.code}
+        language={draft.language}
         readOnly={deleting}
         onChange={(code) => update({ code })}
       />

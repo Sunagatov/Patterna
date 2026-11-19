@@ -16,16 +16,26 @@
     "format": "prettier --write src index.html vite.config.ts tsconfig.json"
   },
   "dependencies": {
+    "@scalar/kotlin-fmt": "0.5.0",
+    "@scalar/ruby-fmt": "0.9.0",
+    "@scalar/rust-fmt": "0.5.0",
+    "@scalar/swift-fmt": "0.3.1",
+    "@wasm-fmt/clang-format": "23.1.1",
+    "@wasm-fmt/gofmt": "0.7.3",
+    "@wasm-fmt/ruff_fmt": "0.15.20",
+    "@wasm-fmt/sql_fmt": "0.2.2",
+    "brotli-dec-wasm": "2.3.2",
     "openapi-fetch": "^0.17.0",
+    "prettier": "3.10.1",
     "react": "19.3.1",
-    "react-dom": "19.3.1"
+    "react-dom": "19.3.1",
+    "refractor": "5.0.0"
   },
   "devDependencies": {
     "@types/node": "26.6.6",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.3.0",
-    "prettier": "3.10.1",
     "typescript": "7.0.2",
     "vite": "8.3.8",
     "vitest": "5.1.0"

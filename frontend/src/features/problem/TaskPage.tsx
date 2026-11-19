@@ -51,7 +51,7 @@ export function TaskPage({
     );
   }
   return (
-    <main id="main" tabIndex={-1} className="task-page">
+    <>
       <SiteHeader className="task-header">
         <div className="task-header-actions">
           <StatusSelect
@@ -91,116 +91,121 @@ export function TaskPage({
           </button>
         </div>
       </SiteHeader>
-      {progressError ? (
-        <p className="workspace-error" role="alert">
-          {progressError}
-        </p>
-      ) : null}
-      <p className="mobile-current-task">{problem.title}</p>
-      <div className="mobile-workspace-switch" aria-label="Workspace view">
-        <button
-          aria-pressed={mobilePane === "problem"}
-          onClick={() => setMobilePane("problem")}
-        >
-          <Icon name="file" />
-          Problem
-        </button>
-        <button
-          aria-pressed={mobilePane === "solutions"}
-          onClick={() => setMobilePane("solutions")}
-        >
-          <Icon name="code" />
-          Solutions
-          <span>
-            {
-              solutions.entries.filter(
-                (entry) => entry.problemId === problem.id,
-              ).length
-            }
-          </span>
-        </button>
-      </div>
-      <div
-        ref={panels}
-        className={`task-panels mobile-${mobilePane}`}
-        style={{ "--problem-split": `${split}%` } as CSSProperties}
-      >
-        <section className="question-pane" aria-label="Problem and practice">
-          <div className="pane-heading question-tabs" aria-label="Problem view">
-            <button
-              aria-pressed={leftTab === "question"}
-              onClick={() => setLeftTab("question")}
-            >
-              <Icon name="file" />
-              Question
-            </button>
-            <button
-              aria-pressed={leftTab === "practice"}
-              onClick={() => setLeftTab("practice")}
-            >
-              <Icon name="repeat" />
-              Practice history
-              <span className="pane-count">{problem.history.length}</span>
-            </button>
-          </div>
-          <div className="question-scroll">
-            {leftTab === "question" ? (
-              <ProblemContent key={problem.id} problem={problem} />
-            ) : (
-              <PracticeContent
-                problem={problem}
-                onLog={library.logPractice}
-                onDelete={library.deletePractice}
-              />
-            )}
-          </div>
-        </section>
-        <div
-          className="pane-resizer"
-          role="separator"
-          aria-label="Resize problem and solution panes"
-          aria-orientation="vertical"
-          aria-valuemin={30}
-          aria-valuemax={65}
-          aria-valuenow={Math.round(split)}
-          tabIndex={0}
-          onPointerDown={(event) => {
-            event.currentTarget.setPointerCapture(event.pointerId);
-            resize(event.clientX);
-          }}
-          onPointerMove={(event) => {
-            if (event.currentTarget.hasPointerCapture(event.pointerId))
-              resize(event.clientX);
-          }}
-          onKeyDown={(event) => {
-            if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
-              event.preventDefault();
-              setSplit((value) =>
-                Math.min(
-                  65,
-                  Math.max(30, value + (event.key === "ArrowLeft" ? -2 : 2)),
-                ),
-              );
-            }
-          }}
-        >
-          <span />
+      <main id="main" tabIndex={-1} className="task-page">
+        {progressError ? (
+          <p className="workspace-error" role="alert">
+            {progressError}
+          </p>
+        ) : null}
+        <p className="mobile-current-task">{problem.title}</p>
+        <div className="mobile-workspace-switch" aria-label="Workspace view">
+          <button
+            aria-pressed={mobilePane === "problem"}
+            onClick={() => setMobilePane("problem")}
+          >
+            <Icon name="file" />
+            Problem
+          </button>
+          <button
+            aria-pressed={mobilePane === "solutions"}
+            onClick={() => setMobilePane("solutions")}
+          >
+            <Icon name="code" />
+            Solutions
+            <span>
+              {
+                solutions.entries.filter(
+                  (entry) => entry.problemId === problem.id,
+                ).length
+              }
+            </span>
+          </button>
         </div>
-        <SolutionWorkspace
-          key={problem.id}
-          problemId={problem.id}
-          solutions={solutions}
-          onDirtyChange={onDirtyChange}
-        />
-      </div>
-      {practiceOpen ? (
-        <PracticeDialog
-          problem={problem}
-          onLog={library.logPractice}
-          onDelete={library.deletePractice}
-          onClose={() => setPracticeOpen(false)}
-        />
-      ) : null}
-    </main>
+        <div
+          ref={panels}
+          className={`task-panels mobile-${mobilePane}`}
+          style={{ "--problem-split": `${split}%` } as CSSProperties}
+        >
+          <section className="question-pane" aria-label="Problem and practice">
+            <div
+              className="pane-heading question-tabs"
+              aria-label="Problem view"
+            >
+              <button
+                aria-pressed={leftTab === "question"}
+                onClick={() => setLeftTab("question")}
+              >
+                <Icon name="file" />
+                Question
+              </button>
+              <button
+                aria-pressed={leftTab === "practice"}
+                onClick={() => setLeftTab("practice")}
+              >
+                <Icon name="repeat" />
+                Practice history
+                <span className="pane-count">{problem.history.length}</span>
+              </button>
+            </div>
+            <div className="question-scroll">
+              {leftTab === "question" ? (
+                <ProblemContent key={problem.id} problem={problem} />
+              ) : (
+                <PracticeContent
+                  problem={problem}
+                  onLog={library.logPractice}
+                  onDelete={library.deletePractice}
+                />
+              )}
+            </div>
+          </section>
+          <div
+            className="pane-resizer"
+            role="separator"
+            aria-label="Resize problem and solution panes"
+            aria-orientation="vertical"
+            aria-valuemin={30}
+            aria-valuemax={65}
+            aria-valuenow={Math.round(split)}
+            tabIndex={0}
+            onPointerDown={(event) => {
+              event.currentTarget.setPointerCapture(event.pointerId);
+              resize(event.clientX);
+            }}
+            onPointerMove={(event) => {
+              if (event.currentTarget.hasPointerCapture(event.pointerId))
+                resize(event.clientX);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+                event.preventDefault();
+                setSplit((value) =>
+                  Math.min(
+                    65,
+                    Math.max(30, value + (event.key === "ArrowLeft" ? -2 : 2)),
+                  ),
+                );
+              }
+            }}
+          >
+            <span />
+          </div>
+          <SolutionWorkspace
+            key={problem.id}
+            problemId={problem.id}
+            solutions={solutions}
+            onDirtyChange={onDirtyChange}
+          />
+        </div>
+        {practiceOpen ? (
+          <PracticeDialog
+            problem={problem}
+            onLog={library.logPractice}
+            onDelete={library.deletePractice}
+            onClose={() => setPracticeOpen(false)}
+          />
+        ) : null}
+      </main>
+    </>
   );
 }
