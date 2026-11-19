@@ -32,14 +32,14 @@ The importer validates the source links against the seeded slugs. It updates que
 
 ## Import additional study plans
 
-LeetCode 75, Top 100 Liked and Top Interview 150 use a private Google Docs snapshot. Each plan records its list ID, document URL, document revision and problem records with LeetCode slug, number, title, difficulty, category, tags, question details and verification status. Preview and merge the snapshot after seeding the base catalogue.
+Import private Google Docs snapshots for LeetCode 75, Top 100 Liked, Top Interview 150, LeetCode Free and NeetCode All. Include the list ID, document URL and revision for each source document. Each problem has a LeetCode slug and number, catalogue metadata, source platform, question and verification status. A blocked source has a null question. NeetCode All may span several topic documents and include Premium Algo 100 membership on individual records. Preview the merge after seeding the base catalogue.
 
 ```sh
 uv run python -m patterna.import_study_plans --check /path/to/study-plans.json
 uv run python -m patterna.import_study_plans /path/to/study-plans.json
 ```
 
-The merge reuses existing problem IDs and adds list memberships without changing practice history, status, review flags or solutions. It adds missing LeetCode details and upgrades lower-verification versions. Keep the snapshot outside Git. Repeating the same import produces zero changes.
+The merge reuses existing problem IDs and adds list memberships without changing practice history, status, review flags or solutions. It adds missing NeetCode links and merges question details separately for each platform, keeping the better-verified version. Keep snapshots outside Git. Repeating the same import produces zero changes.
 
 A deployment should route the frontend and `/api` through the same HTTPS origin and leave secure cookies enabled. Set `PATTERNA_DATABASE_URL` and `PATTERNA_PASSWORD_HASH` in the runtime environment using the format in `.env.example`. The login attempt limit is process-local, so run a single API worker or enforce a shared limit at deployment.
 

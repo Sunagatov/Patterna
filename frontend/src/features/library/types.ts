@@ -22,6 +22,7 @@ export interface Problem {
   title: string;
   difficulty: Difficulty;
   category: string;
+  listCategories?: components["schemas"]["ProblemView"]["listCategories"];
   lcSlug: string;
   ncSlug: string;
   lists: StudyListId[];
@@ -54,10 +55,13 @@ export type SortOrder =
 export const studyLists: { id: LibraryListId; name: string }[] = [
   { id: "nc250", name: "NeetCode 250" },
   { id: "nc150", name: "NeetCode 150" },
-  { id: "blind75", name: "Blind 75" },
+  { id: "blind75", name: "Blind 75 (NeetCode)" },
+  { id: "ncall", name: "NeetCode All (May 2026)" },
   { id: "leetcode75", name: "LeetCode 75" },
-  { id: "top100liked", name: "Top 100 Liked" },
-  { id: "topinterview150", name: "Top Interview 150" },
+  { id: "top100liked", name: "LeetCode Top 100 Liked" },
+  { id: "topinterview150", name: "LeetCode Top Interview 150" },
+  { id: "premiumalgo100", name: "LeetCode Premium Algo 100" },
+  { id: "leetcodefree", name: "LeetCode Free" },
   { id: "all", name: "All problems" },
 ];
 

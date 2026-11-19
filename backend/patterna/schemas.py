@@ -17,7 +17,15 @@ from pydantic.alias_generators import to_camel
 Status = Literal["Not started", "In progress", "Unsolved", "Solved"]
 Difficulty = Literal["Easy", "Medium", "Hard", "Very Hard"]
 StudyListId = Literal[
-    "nc250", "nc150", "blind75", "leetcode75", "top100liked", "topinterview150"
+    "nc250",
+    "nc150",
+    "blind75",
+    "ncall",
+    "leetcode75",
+    "top100liked",
+    "topinterview150",
+    "premiumalgo100",
+    "leetcodefree",
 ]
 
 
@@ -90,6 +98,7 @@ class ProblemView(ProgressView):
     title: str
     difficulty: Difficulty
     category: str
+    list_categories: dict[StudyListId, str]
     lc_slug: str
     nc_slug: str
     lists: list[StudyListId]

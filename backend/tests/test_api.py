@@ -225,6 +225,35 @@ def test_study_plan_import_reuses_progress_and_is_idempotent(client):
             == repeat["question_details_added_or_upgraded"]
             == 0
         )
+        topic = {
+            **plan,
+            "listId": "ncall",
+            "problems": [
+                {
+                    **new,
+                    "platform": "neetcode",
+                    "ncSlug": "new-neetcode-task",
+                    "sourceUrl": "https://neetcode.io/problems/new-neetcode-task/question",
+                    "verification": "partial",
+                    "question": {
+                        **new["question"],
+                        "description": ["NeetCode version"],
+                    },
+                    "additionalLists": ["premiumalgo100"],
+                }
+            ],
+        }
+        second_topic = {
+            **topic,
+            "documentUrl": "https://docs.google.com/document/d/second-topic",
+            "problems": [shared],
+        }
+        expanded = StudyPlans.model_validate({"plans": [topic, second_topic]})
+        result = import_study_plans(db, expanded, check_only=False)
+        assert result["plans"] == {"ncall": 2, "premiumalgo100": 1}
+        assert result["neetcode_links_added"] == 1
+        assert result["question_details_added_or_upgraded"] == 1
+        assert result["list_categories_updated"] == 1
     finally:
         sessions.close()
 
@@ -233,13 +262,20 @@ def test_study_plan_import_reuses_progress_and_is_idempotent(client):
         1,
         "Concatenation of Array",
         "Solved",
-        ["nc250", "leetcode75"],
+        ["nc250", "leetcode75", "ncall"],
     )
-    assert added["lists"] == ["leetcode75", "topinterview150"]
-    assert not added["ncSlug"]
+    assert old["category"] == "Arrays & Hashing"
+    assert old["listCategories"] == {"ncall": "Shared topic"}
+    assert added["lists"] == [
+        "leetcode75",
+        "topinterview150",
+        "ncall",
+        "premiumalgo100",
+    ]
+    assert added["ncSlug"] == "new-neetcode-task"
     assert client.get(f"/api/problems/{added['id']}/question").json()[
         "description"
-    ] == ["New task details"]
+    ] == ["NeetCode version"]
 
 
 def test_owner_session_and_browser_write_protection(client):

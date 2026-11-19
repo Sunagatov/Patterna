@@ -1143,6 +1143,26 @@
             "type": "string",
             "title": "Category"
           },
+          "listCategories": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "enum": [
+                "nc250",
+                "nc150",
+                "blind75",
+                "ncall",
+                "leetcode75",
+                "top100liked",
+                "topinterview150",
+                "premiumalgo100",
+                "leetcodefree"
+              ]
+            },
+            "type": "object",
+            "title": "Listcategories"
+          },
           "lcSlug": {
             "type": "string",
             "title": "Lcslug"
@@ -1158,9 +1178,12 @@
                 "nc250",
                 "nc150",
                 "blind75",
+                "ncall",
                 "leetcode75",
                 "top100liked",
-                "topinterview150"
+                "topinterview150",
+                "premiumalgo100",
+                "leetcodefree"
               ]
             },
             "type": "array",
@@ -1190,6 +1213,7 @@
           "title",
           "difficulty",
           "category",
+          "listCategories",
           "lcSlug",
           "ncSlug",
           "lists",

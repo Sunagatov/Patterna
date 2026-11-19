@@ -40,6 +40,7 @@ def snapshot(db: DB) -> Workspace:
             title=problem.title,
             difficulty=problem.difficulty,
             category=problem.category,
+            list_categories=problem.list_categories,
             lc_slug=problem.lc_slug,
             nc_slug=problem.nc_slug,
             lists=problem.lists,

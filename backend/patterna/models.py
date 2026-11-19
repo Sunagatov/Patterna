@@ -26,6 +26,9 @@ class Problem(Base):
     title: Mapped[str] = mapped_column(String(200))
     difficulty: Mapped[str] = mapped_column(String(12))
     category: Mapped[str] = mapped_column(String(80))
+    list_categories: Mapped[dict[str, str]] = mapped_column(
+        JSON, server_default=text("'{}'")
+    )
     lc_slug: Mapped[str] = mapped_column(String(160), unique=True)
     nc_slug: Mapped[str] = mapped_column(String(160))
     lists: Mapped[list[str]] = mapped_column(JSON)

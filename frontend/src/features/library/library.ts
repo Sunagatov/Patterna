@@ -12,15 +12,34 @@ export function inList(problem: Problem, listId: LibraryListId): boolean {
   return listId === "all" || problem.lists.includes(listId);
 }
 
+export function topicForList(problem: Problem, list: LibraryListId): string {
+  return (
+    (list === "all" ? undefined : problem.listCategories?.[list]) ??
+    problem.category
+  );
+}
+
+export function groupByTopic(problems: Problem[], list: LibraryListId) {
+  const groups = new Map<string, Problem[]>();
+  for (const problem of problems) {
+    const topic = topicForList(problem, list);
+    const group = groups.get(topic);
+    if (group) group.push(problem);
+    else groups.set(topic, [problem]);
+  }
+  return groups;
+}
+
 export function matchesFilters(
   problem: Problem,
   search: string,
   filters: LibraryFilters,
+  list: LibraryListId = "all",
 ): boolean {
   const query = search.trim().toLocaleLowerCase();
   if (
     query &&
-    !`${problem.title} ${problem.category} ${problem.tags.join(" ")} ${problem.id}`
+    !`${problem.title} ${topicForList(problem, list)} ${problem.tags.join(" ")} ${problem.id}`
       .toLocaleLowerCase()
       .includes(query)
   )

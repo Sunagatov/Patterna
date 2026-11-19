@@ -16,6 +16,7 @@ export function ProblemContent({ problem }: { problem: Problem }) {
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
   const problemId = problem.id;
+  const showDemo = problem.lcSlug === "concatenation-of-array";
 
   useEffect(() => {
     const request = new AbortController();
@@ -54,10 +55,19 @@ export function ProblemContent({ problem }: { problem: Problem }) {
         ))}
       </div>
       {question ? <QuestionDetails question={question} /> : null}
-      {status === "loaded" &&
-      !question &&
-      problem.lcSlug === "concatenation-of-array" ? (
+      {status === "loaded" && !question && showDemo ? (
         <ConcatenationDescription />
+      ) : null}
+      {status === "loaded" && !question && !showDemo ? (
+        <p>
+          <a
+            href={`https://leetcode.com/problems/${encodeURIComponent(problem.lcSlug)}/`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            View the problem on LeetCode
+          </a>
+        </p>
       ) : null}
       {status === "loading" ? <p role="status">Loading question…</p> : null}
       {status === "error" ? (

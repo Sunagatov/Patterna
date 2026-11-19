@@ -10,7 +10,14 @@ import { FilterDialog } from "./components/FilterDialog";
 import { PracticeDialog } from "./components/PracticeDialog";
 import { ProgressSummary } from "./components/ProgressSummary";
 import { TopicSection } from "./components/TopicSection";
-import { filterCount, inList, matchesFilters, sortProblems } from "./library";
+import {
+  filterCount,
+  groupByTopic,
+  inList,
+  matchesFilters,
+  sortProblems,
+  topicForList,
+} from "./library";
 import { readDefaultList, saveDefaultList } from "./storage";
 import { emptyFilters, studyLists } from "./types";
 import type {
@@ -58,7 +65,7 @@ export function LibraryPage({
     () =>
       new Set(
         filters.needsReview
-          ? library.problems.map((problem) => problem.category)
+          ? library.problems.map((problem) => topicForList(problem, list))
           : ["Arrays & Hashing"],
       ),
   );
@@ -66,22 +73,22 @@ export function LibraryPage({
   const [message, setMessage] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
 
-  const categories = [
-    ...new Set(library.problems.map((problem) => problem.category)),
-  ];
   const labels = [
     ...new Set(library.problems.flatMap((problem) => problem.tags)),
   ];
   const collection = library.problems.filter((problem) =>
     inList(problem, list),
   );
+  const collectionGroups = groupByTopic(collection, list);
+  const categories = [...collectionGroups.keys()];
   const visible = sortProblems(
-    collection.filter((problem) => matchesFilters(problem, search, filters)),
+    collection.filter((problem) =>
+      matchesFilters(problem, search, filters, list),
+    ),
     sort,
   );
-  const topics = categories.filter((category) =>
-    visible.some((problem) => problem.category === category),
-  );
+  const visibleGroups = groupByTopic(visible, list);
+  const topics = categories.filter((category) => visibleGroups.has(category));
   const count = filterCount(filters);
   const narrowed = Boolean(search.trim() || count);
   const allExpanded =
@@ -141,7 +148,13 @@ export function LibraryPage({
 
   function changeList(next: LibraryListId) {
     setList(next);
-    setExpanded(new Set(narrowed ? categories : ["Arrays & Hashing"]));
+    setExpanded(
+      new Set(
+        narrowed
+          ? library.problems.map((problem) => topicForList(problem, next))
+          : ["Arrays & Hashing"],
+      ),
+    );
   }
 
   function makeDefault() {
@@ -247,12 +260,8 @@ export function LibraryPage({
             <TopicSection
               key={category}
               category={category}
-              problems={visible.filter(
-                (problem) => problem.category === category,
-              )}
-              collectionProblems={collection.filter(
-                (problem) => problem.category === category,
-              )}
+              problems={visibleGroups.get(category) ?? []}
+              collectionProblems={collectionGroups.get(category) ?? []}
               expanded={expanded.has(category)}
               onToggle={() =>
                 setExpanded((current) => {
