@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type { RefObject } from "react";
 import { Icon } from "../../../shared/ui/Icon";
 import { studyLists } from "../types";
@@ -18,6 +19,8 @@ interface ControlsProps {
   onSort: (sort: SortOrder) => void;
   filterCount: number;
   onFilters: () => void;
+  listView: boolean;
+  onToggleView: () => void;
   allExpanded: boolean;
   onExpandAll: () => void;
 }
@@ -84,6 +87,8 @@ export function LibraryToolbar({
   onSort,
   filterCount,
   onFilters,
+  listView,
+  onToggleView,
   allExpanded,
   onExpandAll,
 }: Omit<ControlsProps, "list" | "defaultList" | "onList" | "onDefault">) {
@@ -115,6 +120,14 @@ export function LibraryToolbar({
           <span className="filter-count">{filterCount}</span>
         ) : null}
       </button>
+      <button
+        className="button library-view-button"
+        type="button"
+        onClick={onToggleView}
+      >
+        <Icon name={listView ? "groupedList" : "list"} />
+        {listView ? "Grouped view" : "List view"}
+      </button>
       <div className="select-wrap sort-select">
         <label className="sr-only" htmlFor="problem-sort">
           Sort problems
@@ -136,10 +149,39 @@ export function LibraryToolbar({
         </select>
         <Icon name="chevronDown" />
       </div>
-      <button className="text-button expand-button" onClick={onExpandAll}>
-        {allExpanded ? "Collapse all" : "Expand all"}
-      </button>
+      {listView ? null : (
+        <button className="text-button expand-button" onClick={onExpandAll}>
+          {allExpanded ? "Collapse all" : "Expand all"}
+        </button>
+      )}
     </div>
+  );
+}
+
+export function BackToTopButton() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const updateVisibility = () => setVisible(window.scrollY > 240);
+    updateVisibility();
+    window.addEventListener("scroll", updateVisibility, { passive: true });
+    return () => window.removeEventListener("scroll", updateVisibility);
+  }, []);
+
+  if (!visible) return null;
+  return (
+    <button
+      className="button library-back-to-top"
+      type="button"
+      aria-label="Back to top"
+      title="Back to top"
+      onClick={(event) => {
+        event.currentTarget.closest("main")?.focus({ preventScroll: true });
+        window.scrollTo({ top: 0, behavior: "instant" });
+      }}
+    >
+      <Icon name="arrowUp" />
+    </button>
   );
 }
 

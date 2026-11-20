@@ -1,0 +1,134 @@
+.practice-calendar {
+  width: min(100%, 340px);
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: var(--surface);
+}
+
+.practice-calendar h2 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.calendar-navigation {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 32px;
+  align-items: center;
+  margin: 10px 0 8px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.calendar-navigation button {
+  display: grid;
+  min-height: 32px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--background);
+  color: var(--ink);
+}
+
+.calendar-navigation button:disabled {
+  color: var(--muted);
+  opacity: 0.55;
+}
+
+.calendar-navigation svg {
+  width: 14px;
+  height: 14px;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 3px;
+  text-align: center;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.calendar-weekday {
+  padding-bottom: 4px;
+  color: var(--muted);
+}
+
+.calendar-day {
+  display: grid;
+  width: 100%;
+  min-height: 30px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.calendar-day[aria-current="date"] {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.calendar-practised {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.calendar-practised:hover,
+.calendar-practised[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.calendar-caption {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 20px;
+  margin: 6px 0 10px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.calendar-key {
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  background: var(--accent-soft);
+}
+
+.calendar-streaks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  margin: 0;
+}
+
+.calendar-streaks > div {
+  padding: 9px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--background);
+}
+
+.calendar-streaks dt {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.calendar-streaks dd {
+  margin: 3px 0 0;
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}

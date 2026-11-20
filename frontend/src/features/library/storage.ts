@@ -10,6 +10,7 @@ import type {
 
 const progressKey = "patterna.library.v1";
 const defaultListKey = "patterna.default-list.v1";
+const libraryViewKey = "patterna.library-view.v1";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -25,7 +26,9 @@ function isEntry(value: unknown): value is PracticeEntry {
 }
 
 export function readProblems(): Problem[] {
-  const progress: unknown = JSON.parse(localStorage.getItem(progressKey) ?? "{}");
+  const progress: unknown = JSON.parse(
+    localStorage.getItem(progressKey) ?? "{}",
+  );
   if (!isRecord(progress)) throw new Error("Invalid saved progress");
   return initialProblems.map((problem) => {
     const record = progress[String(problem.id)];
@@ -69,6 +72,22 @@ export function readDefaultList(): LibraryListId | null {
 export function saveDefaultList(list: LibraryListId | null): void {
   try {
     localStorage.setItem(defaultListKey, list ?? "none");
+  } catch {
+    /* Preference applies for this session. */
+  }
+}
+
+export function readListView(): boolean {
+  try {
+    return localStorage.getItem(libraryViewKey) === "list";
+  } catch {
+    return false;
+  }
+}
+
+export function saveListView(listView: boolean): void {
+  try {
+    localStorage.setItem(libraryViewKey, listView ? "list" : "grouped");
   } catch {
     /* Preference applies for this session. */
   }

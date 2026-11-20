@@ -4,12 +4,48 @@ import type { Problem } from "../types";
 import { TaskRow } from "./TaskRow";
 import type { TaskActions } from "./TaskRow";
 
-interface TopicProps extends TaskActions {
+interface TopicTableProps extends TaskActions {
   category: string;
   problems: Problem[];
+}
+
+interface TopicProps extends TopicTableProps {
   collectionProblems: Problem[];
   expanded: boolean;
   onToggle: () => void;
+}
+
+function ProblemTable({ category, problems, ...actions }: TopicTableProps) {
+  return (
+    <table className="task-table">
+      <caption className="sr-only">{category} problems</caption>
+      <thead>
+        <tr>
+          <th scope="col">Problem</th>
+          <th scope="col">Difficulty</th>
+          <th scope="col">Status</th>
+          <th scope="col">Practice</th>
+          <th scope="col">Review</th>
+        </tr>
+      </thead>
+      <tbody>
+        {problems.map((problem) => (
+          <TaskRow key={problem.id} problem={problem} {...actions} />
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+export function TopicTable(props: TopicTableProps) {
+  return (
+    <section className="topic-table">
+      <h2>{props.category}</h2>
+      <div className="topic-group">
+        <ProblemTable {...props} />
+      </div>
+    </section>
+  );
 }
 
 export function TopicSection({
@@ -62,23 +98,7 @@ export function TopicSection({
       <div id={panelId} hidden={!expanded}>
         {expanded ? (
           <>
-            <table className="task-table">
-              <caption className="sr-only">{category} problems</caption>
-              <thead>
-                <tr>
-                  <th scope="col">Problem</th>
-                  <th scope="col">Difficulty</th>
-                  <th scope="col">Status</th>
-                  <th scope="col">Practice</th>
-                  <th scope="col">Review</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visible.map((problem) => (
-                  <TaskRow key={problem.id} problem={problem} {...actions} />
-                ))}
-              </tbody>
-            </table>
+            <ProblemTable category={category} problems={visible} {...actions} />
             {problems.length > 6 ? (
               <button
                 className="more-problems"

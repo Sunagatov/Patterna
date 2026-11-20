@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Icon } from "../../shared/ui/Icon";
 import {
   ActiveFilters,
+  BackToTopButton,
   CollectionSelector,
   LibraryToolbar,
 } from "./components/LibraryControls";
@@ -9,7 +10,8 @@ import type { SelectionFilter } from "./components/LibraryControls";
 import { FilterDialog } from "./components/FilterDialog";
 import { PracticeDialog } from "./components/PracticeDialog";
 import { ProgressSummary } from "./components/ProgressSummary";
-import { TopicSection } from "./components/TopicSection";
+import { PracticeCalendar } from "./components/PracticeCalendar";
+import { TopicSection, TopicTable } from "./components/TopicSection";
 import {
   filterCount,
   groupByTopic,
@@ -18,7 +20,12 @@ import {
   sortProblems,
   topicForList,
 } from "./library";
-import { readDefaultList, saveDefaultList } from "./storage";
+import {
+  readDefaultList,
+  readListView,
+  saveDefaultList,
+  saveListView,
+} from "./storage";
 import { emptyFilters, studyLists } from "./types";
 import type {
   LibraryFilters,
@@ -29,9 +36,9 @@ import type {
 import type { LibraryController } from "./useLibrary";
 
 type ActiveDialog =
-  | { kind: "filters" }
-  | { kind: "practice"; problemId: number }
-  | null;
+  { kind: "filters" } | { kind: "practice"; problemId: number } | null;
+
+const listViewBatchSize = 250;
 
 export function LibraryPage({
   library,
@@ -49,14 +56,18 @@ export function LibraryPage({
       "nc250"
     );
   });
-  const availableLists = studyLists.filter((item) =>
-    library.problems.some((problem) => inList(problem, item.id)) || item.id === "all",
+  const availableLists = studyLists.filter(
+    (item) =>
+      library.problems.some((problem) => inList(problem, item.id)) ||
+      item.id === "all",
   );
-  const list = availableLists.some((item) => item.id === selectedList)
-    ? selectedList
-    : availableLists[0].id;
+  const { id: list, name: listName } =
+    availableLists.find((item) => item.id === selectedList) ??
+    availableLists[0];
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortOrder>("list");
+  const [listView, setListView] = useState(readListView);
+  const [tableLimit, setTableLimit] = useState(listViewBatchSize);
   const [filters, setFilters] = useState<LibraryFilters>(() => ({
     ...emptyFilters(),
     needsReview: new URLSearchParams(location.search).get("review") === "true",
@@ -79,6 +90,9 @@ export function LibraryPage({
   const collection = library.problems.filter((problem) =>
     inList(problem, list),
   );
+  const reviewCount = collection.filter(
+    (problem) => problem.needsReview,
+  ).length;
   const collectionGroups = groupByTopic(collection, list);
   const categories = [...collectionGroups.keys()];
   const visible = sortProblems(
@@ -89,13 +103,23 @@ export function LibraryPage({
   );
   const visibleGroups = groupByTopic(visible, list);
   const topics = categories.filter((category) => visibleGroups.has(category));
+  const tableGroups = listView
+    ? groupByTopic(
+        topics
+          .flatMap((category) => visibleGroups.get(category) ?? [])
+          .slice(0, tableLimit),
+        list,
+      )
+    : new Map<string, never>();
   const count = filterCount(filters);
   const narrowed = Boolean(search.trim() || count);
   const allExpanded =
     topics.length > 0 && topics.every((topic) => expanded.has(topic));
   const activeProblem =
     activeDialog?.kind === "practice"
-      ? library.problems.find((problem) => problem.id === activeDialog.problemId)
+      ? library.problems.find(
+          (problem) => problem.id === activeDialog.problemId,
+        )
       : undefined;
 
   useEffect(() => {
@@ -148,6 +172,7 @@ export function LibraryPage({
 
   function changeList(next: LibraryListId) {
     setList(next);
+    setTableLimit(listViewBatchSize);
     setExpanded(
       new Set(
         narrowed
@@ -155,6 +180,13 @@ export function LibraryPage({
           : ["Arrays & Hashing"],
       ),
     );
+  }
+
+  function toggleListView() {
+    const next = !listView;
+    setListView(next);
+    setTableLimit(listViewBatchSize);
+    saveListView(next);
   }
 
   function makeDefault() {
@@ -184,11 +216,19 @@ export function LibraryPage({
     );
   }
 
+  const taskActions = {
+    onStatus: setStatus,
+    onReview: toggleReview,
+    isProgressPending: library.isProgressPending,
+    onPractice: (problemId: number) =>
+      setActiveDialog({ kind: "practice", problemId }),
+  };
+
   return (
     <main
       id={active ? "main" : undefined}
       tabIndex={-1}
-      className="workspace"
+      className="workspace library-workspace"
       hidden={!active}
     >
       <section className="library-heading" aria-labelledby="page-title">
@@ -205,93 +245,139 @@ export function LibraryPage({
           onList={changeList}
           onDefault={makeDefault}
         />
-        <ProgressSummary
-          problems={collection}
-          reviewOnly={filters.needsReview}
-          onReview={() =>
-            applyFilters({ ...filters, needsReview: !filters.needsReview })
-          }
-        />
-        <LibraryToolbar
-          search={search}
-          onSearch={(value) => {
-            setSearch(value);
-            setExpanded(
-              new Set(
-                value.trim() || count ? categories : ["Arrays & Hashing"],
-              ),
-            );
-          }}
-          searchRef={searchRef}
-          sort={sort}
-          onSort={setSort}
-          filterCount={count}
-          onFilters={() => setActiveDialog({ kind: "filters" })}
-          allExpanded={allExpanded}
-          onExpandAll={() =>
-            setExpanded(allExpanded ? new Set() : new Set(topics))
-          }
-        />
-        {count ? (
-          <ActiveFilters
-            filters={filters}
-            onRemove={removeFilter}
-            onRemoveReview={() =>
-              applyFilters({ ...filters, needsReview: false })
-            }
-          />
-        ) : null}
-        <div className="results-meta">
-          <p role="status" aria-live="polite">
-            {narrowed
-              ? `${visible.length} of ${collection.length}`
-              : collection.length}{" "}
-            {collection.length === 1 ? "problem" : "problems"} <span>·</span>{" "}
-            {topics.length} {topics.length === 1 ? "topic" : "topics"}
-          </p>
-          {narrowed ? (
-            <button className="text-button" onClick={clearFilters}>
-              Clear filters
-            </button>
-          ) : null}
-        </div>
-        <div className="topic-list">
-          {topics.map((category) => (
-            <TopicSection
-              key={category}
-              category={category}
-              problems={visibleGroups.get(category) ?? []}
-              collectionProblems={collectionGroups.get(category) ?? []}
-              expanded={expanded.has(category)}
-              onToggle={() =>
-                setExpanded((current) => {
-                  const next = new Set(current);
-                  if (next.has(category)) next.delete(category);
-                  else next.add(category);
-                  return next;
-                })
-              }
-              onStatus={setStatus}
-              onReview={toggleReview}
-              isProgressPending={library.isProgressPending}
-              onPractice={(problemId) =>
-                setActiveDialog({ kind: "practice", problemId })
+        <div className="library-columns">
+          <div className="library-sidebar">
+            <ProgressSummary listName={listName} problems={collection} />
+            <PracticeCalendar problems={library.problems} />
+          </div>
+          <div className="library-results">
+            <LibraryToolbar
+              search={search}
+              onSearch={(value) => {
+                setSearch(value);
+                setExpanded(
+                  new Set(
+                    value.trim() || count ? categories : ["Arrays & Hashing"],
+                  ),
+                );
+              }}
+              searchRef={searchRef}
+              sort={sort}
+              onSort={setSort}
+              filterCount={count}
+              onFilters={() => setActiveDialog({ kind: "filters" })}
+              listView={listView}
+              onToggleView={toggleListView}
+              allExpanded={allExpanded}
+              onExpandAll={() =>
+                setExpanded(allExpanded ? new Set() : new Set(topics))
               }
             />
-          ))}
-        </div>
-        {!visible.length ? (
-          <div className="empty-state">
-            <span className="empty-icon">
-              <Icon name="search" />
-            </span>
-            <h2>No problems match</h2>
-            <p>Try another search or adjust your filters.</p>
-            <button className="button button-primary" onClick={clearFilters}>
-              Clear search & filters
-            </button>
+            {count ? (
+              <ActiveFilters
+                filters={filters}
+                onRemove={removeFilter}
+                onRemoveReview={() =>
+                  applyFilters({ ...filters, needsReview: false })
+                }
+              />
+            ) : null}
+            <div className="results-meta">
+              <p role="status" aria-live="polite">
+                {narrowed
+                  ? `${visible.length} of ${collection.length}`
+                  : collection.length}{" "}
+                {collection.length === 1 ? "problem" : "problems"}{" "}
+                <span>·</span> {topics.length}{" "}
+                {topics.length === 1 ? "topic" : "topics"}
+              </p>
+              <div className="results-meta-actions">
+                <button
+                  type="button"
+                  className="summary-review"
+                  aria-pressed={filters.needsReview}
+                  onClick={() =>
+                    applyFilters({
+                      ...filters,
+                      needsReview: !filters.needsReview,
+                    })
+                  }
+                >
+                  <Icon name="bookmark" />
+                  <span>
+                    <strong>{reviewCount}</strong> need review
+                  </span>
+                </button>
+                {narrowed ? (
+                  <button className="text-button" onClick={clearFilters}>
+                    Clear filters
+                  </button>
+                ) : null}
+              </div>
+            </div>
+            {listView ? (
+              <div className="topic-list topic-list-tables">
+                {Array.from(tableGroups, ([category, problems]) => (
+                  <TopicTable
+                    key={category}
+                    category={category}
+                    problems={problems}
+                    {...taskActions}
+                  />
+                ))}
+                {visible.length > tableLimit ? (
+                  <button
+                    className="button list-view-more"
+                    type="button"
+                    onClick={() =>
+                      setTableLimit((limit) => limit + listViewBatchSize)
+                    }
+                  >
+                    Show{" "}
+                    {Math.min(listViewBatchSize, visible.length - tableLimit)}{" "}
+                    more problems
+                  </button>
+                ) : null}
+              </div>
+            ) : (
+              <div className="topic-list">
+                {topics.map((category) => (
+                  <TopicSection
+                    key={category}
+                    category={category}
+                    problems={visibleGroups.get(category) ?? []}
+                    collectionProblems={collectionGroups.get(category) ?? []}
+                    expanded={expanded.has(category)}
+                    onToggle={() =>
+                      setExpanded((current) => {
+                        const next = new Set(current);
+                        if (next.has(category)) next.delete(category);
+                        else next.add(category);
+                        return next;
+                      })
+                    }
+                    {...taskActions}
+                  />
+                ))}
+              </div>
+            )}
+            {!visible.length ? (
+              <div className="empty-state">
+                <span className="empty-icon">
+                  <Icon name="search" />
+                </span>
+                <h2>No problems match</h2>
+                <p>Try another search or adjust your filters.</p>
+                <button
+                  className="button button-primary"
+                  onClick={clearFilters}
+                >
+                  Clear search & filters
+                </button>
+              </div>
+            ) : null}
           </div>
-        ) : null}
+        </div>
       </section>
       {active && activeDialog?.kind === "filters" ? (
         <FilterDialog
@@ -312,6 +398,7 @@ export function LibraryPage({
           onClose={() => setActiveDialog(null)}
         />
       ) : null}
+      {active ? <BackToTopButton /> : null}
       <div
         className={`toast${message ? " visible" : ""}`}
         role="status"
