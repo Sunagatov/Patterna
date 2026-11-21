@@ -62,6 +62,17 @@ describe("personal solutions", () => {
     expect(first).toHaveLength(1);
   });
 
+  it("reports the oversized field and counts Unicode code points like the API", () => {
+    const limit = "x".repeat(199_999) + "🧩";
+    expect(validateSolution({ ...emptySolution(), code: limit })).toBeNull();
+    expect(validateSolution({ ...emptySolution(), code: limit + "x" })).toBe(
+      "Solution code must be 200,000 characters or fewer.",
+    );
+    expect(validateSolution({ ...emptySolution(), thoughts: limit + "x" })).toBe(
+      "Solution thoughts must be 200,000 characters or fewer.",
+    );
+  });
+
   it("requires content inside numbered items and fences on new saves", () => {
     for (const thoughts of ["1. \n2. ", "```python\n```", "```text\r\n  \r\n```"])
       expect(validateSolution({ ...emptySolution(), thoughts })).toBeTruthy();

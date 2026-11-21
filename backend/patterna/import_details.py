@@ -5,13 +5,15 @@ from typing import Literal
 from urllib.parse import urlsplit
 
 from pydantic import Field, ValidationError, model_validator
-from sqlalchemy import select
+from sqlalchemy import case, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from .db import engine
 from .models import Problem, ProblemDetail
 from .schemas import ApiModel, ProblemQuestion
+
+VERIFICATION_RANK = {"blocked": 0, "partial": 1, "verified": 2}
 
 
 class SourceDetail(ApiModel):
@@ -82,24 +84,29 @@ def import_details(db: Session, catalogue: CatalogueDetails, *, check_only: bool
             }
         )
 
-    if not check_only:
-        statement = insert(ProblemDetail)
-        db.execute(
-            statement.on_conflict_do_update(
-                index_elements=[ProblemDetail.problem_id, ProblemDetail.platform],
-                set_={
-                    key: statement.excluded[key]
-                    for key in rows[0]
-                    if key not in {"problem_id", "platform"}
-                },
-            ),
-            rows,
+    if check_only:
+        return Counter(
+            (detail.platform, detail.verification) for detail in catalogue.details
         )
-        db.commit()
 
-    return Counter(
-        (detail.platform, detail.verification) for detail in catalogue.details
+    statement = insert(ProblemDetail)
+    incoming_rank = case(VERIFICATION_RANK, value=statement.excluded.verification)
+    existing_rank = case(VERIFICATION_RANK, value=ProblemDetail.verification)
+    write = statement.on_conflict_do_update(
+        index_elements=[ProblemDetail.problem_id, ProblemDetail.platform],
+        set_={
+            key: statement.excluded[key]
+            for key in rows[0]
+            if key not in {"problem_id", "platform"}
+        },
+        where=incoming_rank >= existing_rank,
+    ).returning(ProblemDetail.platform, ProblemDetail.verification)
+    counts = Counter(
+        (platform, verification)
+        for platform, verification in db.execute(write, rows)
     )
+    db.commit()
+    return counts
 
 
 def main():
@@ -122,6 +129,9 @@ def main():
     action = "Validated" if args.check else "Imported"
     for (platform, status), count in sorted(counts.items()):
         print(f"{action} {count} {platform} records ({status}).")
+    skipped = len(catalogue.details) - counts.total()
+    if skipped:
+        print(f"Kept {skipped} existing source records with higher verification.")
 
 
 if __name__ == "__main__":

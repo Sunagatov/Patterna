@@ -39,6 +39,7 @@ export function TaskPage({
   const [practiceOpen, setPracticeOpen] = useState(false);
   const [progressError, setProgressError] = useState("");
   const [split, setSplit] = useState(44);
+  const practicePending = library.isPracticePending(problem.id);
   const panels = useRef<HTMLDivElement>(null);
   function resize(clientX: number) {
     if (!panels.current) return;
@@ -153,6 +154,7 @@ export function TaskPage({
               ) : (
                 <PracticeContent
                   problem={problem}
+                  busy={practicePending}
                   onLog={library.logPractice}
                   onDelete={library.deletePractice}
                 />
@@ -200,6 +202,7 @@ export function TaskPage({
         {practiceOpen ? (
           <PracticeDialog
             problem={problem}
+            busy={practicePending}
             onLog={library.logPractice}
             onDelete={library.deletePractice}
             onClose={() => setPracticeOpen(false)}

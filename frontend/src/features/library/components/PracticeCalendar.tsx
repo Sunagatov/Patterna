@@ -31,6 +31,10 @@ export function PracticeCalendar({ problems }: { problems: Problem[] }) {
     }
     return counts;
   }, [problems]);
+  const selectedCount = selectedDate
+    ? practiceByDate.get(selectedDate)
+    : undefined;
+  if (selectedDate && selectedCount === undefined) setSelectedDate(undefined);
   const streaks = useMemo(
     () => practiceStreaks(practiceByDate.keys(), currentDate),
     [practiceByDate, currentDate],
@@ -114,10 +118,10 @@ export function PracticeCalendar({ problems }: { problems: Problem[] }) {
         })}
       </div>
       <div className="calendar-caption" aria-live="polite">
-        {selectedDate ? (
+        {selectedDate && selectedCount !== undefined ? (
           <>
             {formatDate(selectedDate, true)} ·{" "}
-            {countLabel(practiceByDate.get(selectedDate) ?? 0)}
+            {countLabel(selectedCount)}
           </>
         ) : (
           <>

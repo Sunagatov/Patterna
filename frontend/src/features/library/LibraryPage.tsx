@@ -393,6 +393,7 @@ export function LibraryPage({
       {active && activeProblem ? (
         <PracticeDialog
           problem={activeProblem}
+          busy={library.isPracticePending(activeProblem.id)}
           onLog={library.logPractice}
           onDelete={library.deletePractice}
           onClose={() => setActiveDialog(null)}

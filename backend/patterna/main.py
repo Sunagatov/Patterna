@@ -25,7 +25,19 @@ app = FastAPI(
 
 
 @app.exception_handler(RequestValidationError)
-async def invalid_request(_request: Request, _error: RequestValidationError):
+async def invalid_request(_request: Request, error: RequestValidationError):
+    labels = {
+        ("body", "code"): "Solution code",
+        ("body", "thoughts"): "Solution thoughts",
+    }
+    for issue in error.errors():
+        if issue["type"] == "string_too_long" and issue["loc"] in labels:
+            label = labels[issue["loc"]]
+            limit = issue["ctx"]["max_length"]
+            return JSONResponse(
+                {"detail": f"{label} must be {limit:,} characters or fewer."},
+                status_code=422,
+            )
     return JSONResponse(
         {"detail": "Check the required fields, dates and text lengths."},
         status_code=422,

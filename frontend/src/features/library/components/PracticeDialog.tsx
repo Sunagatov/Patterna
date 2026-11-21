@@ -6,12 +6,19 @@ import type { Problem } from "../types";
 
 interface Props {
   problem: Problem;
+  busy: boolean;
   onLog: (id: number, date: string) => Promise<string | null>;
   onDelete: (id: number, entryId: string) => Promise<string | null>;
   onClose: () => void;
 }
 
-export function PracticeDialog({ problem, onLog, onDelete, onClose }: Props) {
+export function PracticeDialog({
+  problem,
+  busy,
+  onLog,
+  onDelete,
+  onClose,
+}: Props) {
   return (
     <Dialog
       title="Practice history"
@@ -19,18 +26,23 @@ export function PracticeDialog({ problem, onLog, onDelete, onClose }: Props) {
       className="practice-dialog"
       onClose={onClose}
     >
-      <PracticeContent problem={problem} onLog={onLog} onDelete={onDelete} />
+      <PracticeContent
+        problem={problem}
+        busy={busy}
+        onLog={onLog}
+        onDelete={onDelete}
+      />
     </Dialog>
   );
 }
 
 export function PracticeContent({
   problem,
+  busy,
   onLog,
   onDelete,
 }: Omit<Props, "onClose">) {
   const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
   const dateId = useId();
   return (
     <div className="practice-body">
@@ -53,9 +65,7 @@ export function PracticeContent({
             return;
           }
           setError("");
-          setBusy(true);
           setError((await onLog(problem.id, date)) ?? "");
-          setBusy(false);
         }}
       >
         <label htmlFor={dateId}>Practice date</label>
@@ -103,9 +113,7 @@ export function PracticeContent({
                   className="icon-button"
                   disabled={busy}
                   onClick={async () => {
-                    setBusy(true);
                     setError((await onDelete(problem.id, entry.id)) ?? "");
-                    setBusy(false);
                   }}
                   aria-label={`Delete practice on ${formatDate(entry.date, true)}`}
                 >

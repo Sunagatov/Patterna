@@ -23,7 +23,31 @@ export const codeLanguages = new Map<string, CodeLanguage | null>(
 );
 
 const maxHighlightLength = 50_000;
+const indent = "  ";
 type HighlightCode = typeof import("./highlightCode").highlightCode;
+
+function indentCode(value: string, start: number, end: number) {
+  if (start === end) {
+    return {
+      value: value.slice(0, start) + indent + value.slice(end),
+      start: start + indent.length,
+      end: end + indent.length,
+    };
+  }
+
+  const lineStart = start === 0 ? 0 : value.lastIndexOf("\n", start - 1) + 1;
+  // Exclude the following line if the selection stops at its start.
+  const lineEnd = value[end - 1] === "\n" ? end - 1 : end;
+  const lines = value.slice(lineStart, lineEnd).split("\n");
+  return {
+    value:
+      value.slice(0, lineStart) +
+      lines.map((line) => indent + line).join("\n") +
+      value.slice(lineEnd),
+    start: start + indent.length,
+    end: end + lines.length * indent.length,
+  };
+}
 
 export function CodeEditor({
   code,
@@ -38,6 +62,11 @@ export function CodeEditor({
 }) {
   const editor = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
+  const pendingSelection = useRef<{
+    start: number;
+    end: number;
+    direction: HTMLTextAreaElement["selectionDirection"];
+  } | null>(null);
   const [highlight, setHighlight] = useState<HighlightCode>();
   const text = code.replace(/\r\n?/g, "\n");
   const syntax =
@@ -76,7 +105,18 @@ export function CodeEditor({
   }
 
   useLayoutEffect(() => {
-    if (input.current) syncScroll(input.current);
+    const field = input.current;
+    if (!field) return;
+    const selection = pendingSelection.current;
+    if (selection) {
+      field.setSelectionRange(
+        selection.start,
+        selection.end,
+        selection.direction,
+      );
+      pendingSelection.current = null;
+    }
+    syncScroll(field);
   }, [text]);
 
   const lineNumbers = useMemo(
@@ -116,11 +156,17 @@ export function CodeEditor({
             if (readOnly || event.key !== "Tab" || event.shiftKey) return;
             event.preventDefault();
             const field = event.currentTarget;
-            const { value, selectionStart: start, selectionEnd: end } = field;
-            onChange(value.slice(0, start) + "  " + value.slice(end));
-            requestAnimationFrame(() =>
-              field.setSelectionRange(start + 2, start + 2),
+            const next = indentCode(
+              field.value,
+              field.selectionStart,
+              field.selectionEnd,
             );
+            pendingSelection.current = {
+              start: next.start,
+              end: next.end,
+              direction: field.selectionDirection,
+            };
+            onChange(next.value);
           }}
         />
       </div>

@@ -59,7 +59,24 @@ function hasThoughtsContent(text: string): boolean {
   return false;
 }
 
+const maxSolutionTextLength = 200_000;
+
+function exceedsTextLimit(value: string): boolean {
+  if (value.length <= maxSolutionTextLength) return false;
+  // The API counts Unicode code points, while JavaScript string length counts UTF-16 units.
+  let length = 0;
+  for (const _character of value) {
+    length += 1;
+    if (length > maxSolutionTextLength) return true;
+  }
+  return false;
+}
+
 export function validateSolution(draft: SolutionDraft): string | null {
+  if (exceedsTextLimit(draft.code))
+    return "Solution code must be 200,000 characters or fewer.";
+  if (exceedsTextLimit(draft.thoughts))
+    return "Solution thoughts must be 200,000 characters or fewer.";
   return draft.code.trim() || hasThoughtsContent(draft.thoughts)
     ? null
     : "Add code or thoughts before saving this solution.";

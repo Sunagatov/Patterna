@@ -163,12 +163,39 @@ def test_question_import_uses_stable_slug_and_prefers_neetcode(client):
                 catalogue.model_copy(update={"details": [mismatched]}),
                 check_only=False,
             )
+
+        neetcode, leetcode = catalogue.details
+        assert neetcode.question is not None
+        updated_question = neetcode.question.model_copy(
+            update={"description": ["Corrected NeetCode wording"]}
+        )
+        for verification, question in (("partial", updated_question), ("blocked", None)):
+            weaker = neetcode.model_copy(
+                update={"verification": verification, "question": question}
+            )
+            update = catalogue.model_copy(
+                update={"document_revision": verification, "details": [weaker, leetcode]}
+            )
+            assert import_details(db, update, check_only=False) == {
+                ("leetcode", "verified"): 1
+            }
+            assert client.get(path).json()["description"] == ["neetcode"]
+
+        corrected = catalogue.model_copy(
+            update={
+                "document_revision": "revision-2",
+                "details": [neetcode.model_copy(update={"question": updated_question})],
+            }
+        )
+        assert import_details(db, corrected, check_only=False) == {
+            ("neetcode", "verified"): 1
+        }
     finally:
         sessions.close()
 
     response = client.get(path)
     assert response.status_code == 200
-    assert response.json()["description"] == ["neetcode"]
+    assert response.json()["description"] == ["Corrected NeetCode wording"]
     assert response.json()["constraints"] == ["1 <= nums.length <= 1000"]
     assert client.get("/api/workspace").json()["problems"][0]["status"] == "Not started"
 
@@ -276,6 +303,75 @@ def test_study_plan_import_reuses_progress_and_is_idempotent(client):
     assert client.get(f"/api/problems/{added['id']}/question").json()[
         "description"
     ] == ["NeetCode version"]
+
+
+def test_study_plan_refreshes_question_from_the_same_document(client):
+    login(client)
+    document = "https://docs.google.com/document/d/original-plan"
+    record = {
+        "lcSlug": "concatenation-of-array",
+        "platformNumber": 1929,
+        "title": "Concatenation of Array",
+        "difficulty": "Easy",
+        "category": "Arrays & Hashing",
+        "tags": [],
+        "sourceUrl": "https://leetcode.com/problems/concatenation-of-array/",
+        "verification": "verified",
+        "question": {
+            "description": ["Original wording"],
+            "examples": [],
+            "constraints": [],
+        },
+    }
+    original = {
+        "listId": "leetcode75",
+        "documentUrl": document,
+        "documentRevision": "revision-1",
+        "problems": [record],
+    }
+    corrected = {
+        **original,
+        "documentRevision": "revision-2",
+        "problems": [
+            {
+                **record,
+                "question": {**record["question"], "description": ["Corrected wording"]},
+            }
+        ],
+    }
+    overlap = {
+        **original,
+        "listId": "topinterview150",
+        "documentUrl": "https://docs.google.com/document/d/overlapping-plan",
+    }
+    downgrade = {
+        **original,
+        "documentRevision": "revision-3",
+        "problems": [{**record, "verification": "blocked", "question": None}],
+    }
+    path = "/api/problems/1/question"
+    sessions = app.dependency_overrides[database]()
+    try:
+        db = next(sessions)
+
+        def apply_plans(*plans, preview=False):
+            snapshot = StudyPlans.model_validate({"plans": plans})
+            return import_study_plans(db, snapshot, check_only=preview)
+
+        assert apply_plans(original)["question_details_added_or_upgraded"] == 1
+        assert client.get(path).json()["description"] == ["Original wording"]
+
+        preview = apply_plans(overlap, corrected, preview=True)
+        assert preview["question_details_refreshed"] == 1
+        assert client.get(path).json()["description"] == ["Original wording"]
+        assert apply_plans(overlap, corrected) == preview
+        assert client.get(path).json()["description"] == ["Corrected wording"]
+
+        for plan in (overlap, downgrade, corrected):
+            assert apply_plans(plan)["question_details_refreshed"] == 0
+            assert client.get(path).json()["description"] == ["Corrected wording"]
+    finally:
+        sessions.close()
 
 
 def test_owner_session_and_browser_write_protection(client):
@@ -413,6 +509,25 @@ def test_solutions_check_versions_and_preserve_contents(client):
     assert state["problems"][0]["history"] == []
     assert client.delete(path, params={"version": 2}).status_code == 204
     assert client.delete(path, params={"version": 2}).status_code == 204
+
+
+@pytest.mark.parametrize("field", ["code", "thoughts"])
+def test_solution_text_limit_identifies_the_field(client, field):
+    login(client)
+    path = f"/api/problems/1/solutions/{uuid4()}"
+    at_limit = "x" * 199_999 + "🧩"
+    body = {**DRAFT, field: at_limit, "version": 0}
+
+    too_long = client.put(path, json={**body, field: at_limit + "x"})
+    assert too_long.status_code == 422
+    assert too_long.json() == {
+        "detail": f"Solution {field} must be 200,000 characters or fewer."
+    }
+    assert client.get("/api/workspace").json()["solutions"] == []
+
+    saved = client.put(path, json=body)
+    assert saved.status_code == 200
+    assert saved.json()[field] == at_limit
 
 
 @pytest.mark.parametrize("thoughts", ["1. \n2. ", "```python\n```", "```text\r\n  \r\n```"])

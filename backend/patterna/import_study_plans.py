@@ -10,11 +10,15 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from .db import engine
-from .import_details import SourceDetail, validate_document_url, validate_problem_source
+from .import_details import (
+    VERIFICATION_RANK,
+    SourceDetail,
+    validate_document_url,
+    validate_problem_source,
+)
 from .models import Problem, ProblemDetail
 from .schemas import ApiModel, Difficulty
 
-VERIFICATION_RANK = {"blocked": 0, "partial": 1, "verified": 2}
 SLUG_PATTERN = r"^[a-z0-9]+(?:-[a-z0-9]+)*$"
 
 
@@ -48,7 +52,7 @@ class StudyPlans(ApiModel):
 def import_study_plans(db: Session, snapshot: StudyPlans, *, check_only: bool):
     memberships = defaultdict(list)
     list_categories = defaultdict(dict)
-    selected = {}
+    source_candidates = defaultdict(list)
     catalogue = {}
     numbers = {}
     neetcode_slugs = {}
@@ -88,12 +92,7 @@ def import_study_plans(db: Session, snapshot: StudyPlans, *, check_only: bool):
                 neetcode_slugs.setdefault(slug, record.nc_slug) != record.nc_slug
             ):
                 raise ValueError(f"Conflicting NeetCode slugs: {slug}")
-            key = (slug, record.platform)
-            if key not in selected or (
-                VERIFICATION_RANK[record.verification]
-                > VERIFICATION_RANK[selected[key][1].verification]
-            ):
-                selected[key] = (plan, record)
+            source_candidates[slug, record.platform].append((plan, record))
 
     if not check_only:
         # Protect allocated IDs and membership/detail merges from parallel imports.
@@ -169,22 +168,42 @@ def import_study_plans(db: Session, snapshot: StudyPlans, *, check_only: bool):
                     problem.list_categories = merged_categories
         imported_ids[slug] = problem.id
 
-    for (slug, platform), (plan, record) in selected.items():
+    for (slug, platform), candidates in source_candidates.items():
         problem_id = imported_ids[slug]
         existing = existing_details.get((problem_id, platform))
+        plan, record = max(
+            candidates,
+            key=lambda source: (
+                VERIFICATION_RANK[source[1].verification],
+                existing is not None and source[0].document_url == existing.document_url,
+            ),
+        )
         if (
             existing is not None
             and existing.platform_number is not None
             and existing.platform_number != record.platform_number
         ):
             raise ValueError(f"LeetCode number conflicts with the catalogue: {slug}")
-        if (
-            existing is not None
-            and VERIFICATION_RANK[existing.verification]
-            >= VERIFICATION_RANK[record.verification]
-        ):
-            continue
-        counts["question_details_added_or_upgraded"] += record.question is not None
+        same_rank = False
+        if existing is not None:
+            existing_rank = VERIFICATION_RANK[existing.verification]
+            incoming_rank = VERIFICATION_RANK[record.verification]
+            if incoming_rank < existing_rank:
+                continue
+            same_rank = incoming_rank == existing_rank
+            if same_rank and (
+                record.question is None
+                or plan.document_url != existing.document_url
+                or plan.document_revision == existing.document_revision
+            ):
+                continue
+
+        if record.question is None:
+            counts["metadata_only_sources_added"] += 1
+        elif same_rank:
+            counts["question_details_refreshed"] += 1
+        else:
+            counts["question_details_added_or_upgraded"] += 1
         details.append(
             {
                 "problem_id": problem_id,
@@ -232,8 +251,8 @@ def import_study_plans(db: Session, snapshot: StudyPlans, *, check_only: bool):
         "question_details_added_or_upgraded": counts[
             "question_details_added_or_upgraded"
         ],
-        "metadata_only_sources_added": len(details)
-        - counts["question_details_added_or_upgraded"],
+        "question_details_refreshed": counts["question_details_refreshed"],
+        "metadata_only_sources_added": counts["metadata_only_sources_added"],
         "resulting_catalogue_size": len(problems) + counts["problems_added"],
     }
 
